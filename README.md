@@ -1,5 +1,8 @@
 # uX2: A better [uX](https://github.com/rust-ux/uX)
 
+[![Crates.io](https://img.shields.io/crates/v/ux2)](https://crates.io/crates/ux2)
+[![docs](https://img.shields.io/crates/v/ux2?color=yellow&label=docs)](https://docs.rs/ux2)
+
 #### Non-standard integer types like `u7`, `u9`, `u10`, `u63`, `i7`, `i9` etc.
 
 When non-standard-width integers are required in an application, the norm is to use a larger container and make sure the value is within range after manipulation. uX aims to take care of this once and for all by:
