@@ -2,6 +2,7 @@
 
 [![Crates.io](https://img.shields.io/crates/v/ux2)](https://crates.io/crates/ux2)
 [![docs](https://img.shields.io/crates/v/ux2?color=yellow&label=docs)](https://docs.rs/ux2)
+[![codecov](https://codecov.io/gh/JonathanWoollett-Light/ux2/branch/master/graph/badge.svg?token=II1xtnbCDX)](https://codecov.io/gh/JonathanWoollett-Light/ux2)
 
 #### Non-standard integer types like `u7`, `u9`, `u10`, `u63`, `i7`, `i9` etc.
 
