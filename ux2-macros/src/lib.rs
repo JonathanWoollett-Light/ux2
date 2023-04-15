@@ -318,6 +318,7 @@ pub fn generate_types(item: proc_macro::TokenStream) -> proc_macro::TokenStream 
                 };
                 quote! {
                     #[doc=#unsigned_doc]
+                    #[cfg_attr(feature="serde", derive(serde::Serialize, serde::Deserialize))]
                     #[derive(Debug, Eq, PartialEq, Ord, PartialOrd, Clone, Copy, Hash)]
                     pub struct #unsigned_ident(#unsigned_inner_ident);
                     impl #unsigned_ident {
@@ -753,6 +754,7 @@ pub fn generate_types(item: proc_macro::TokenStream) -> proc_macro::TokenStream 
                     }
 
                     #[doc=#signed_doc]
+                    #[cfg_attr(feature="serde", derive(serde::Serialize, serde::Deserialize))]
                     #[derive(Debug, Eq, PartialEq, Ord, PartialOrd, Clone, Copy, Hash)]
                     pub struct #signed_ident(#signed_inner_ident);
                     impl #signed_ident {
