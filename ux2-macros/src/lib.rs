@@ -36,7 +36,13 @@ pub fn generate_types(item: proc_macro::TokenStream) -> proc_macro::TokenStream 
             },
             _ => {
                 let inner_size = std::cmp::max(size.next_power_of_two(),8);
+                let inner_bytes = (inner_size / 8) as usize;
                 let bits = size as u32;
+                let bytes = match size % 8 {
+                    0 => size / 8,
+                    1..=7 => (size / 8) + 1,
+                    _ => unreachable!()
+                } as usize;
 
                 let unsigned_doc = format!(" The {size}-bit unsigned integer type.");
                 let unsigned_inner_ident = format_ident!("u{inner_size}");
@@ -342,6 +348,64 @@ pub fn generate_types(item: proc_macro::TokenStream) -> proc_macro::TokenStream 
                         #[doc=#unsigned_bits_doc]
                         /// ```
                         pub const BITS: u32 = #bits;
+
+                        /// Create a native endian integer value from its representation as a byte
+                        /// array in big endian.
+                        pub fn from_be_bytes(bytes: [u8; #bytes]) -> Self {
+                            let mut arr = [0u8; #inner_bytes];
+                            unsafe {
+                                (&mut arr[1] as *mut u8).copy_from_nonoverlapping(&bytes[0],#bytes);
+                            }
+                            Self(#unsigned_inner_ident::from_be_bytes(arr))
+                        }
+                        /// Create a native endian integer value from its representation as a byte
+                        /// array in little endian.
+                        pub fn from_le_bytes(bytes: [u8; #bytes]) -> Self {
+                            let mut arr = [0u8; #inner_bytes];
+                            unsafe {
+                                (&mut arr[0] as *mut u8).copy_from_nonoverlapping(&bytes[0],#bytes);
+                            }
+                            Self(#unsigned_inner_ident::from_le_bytes(arr))
+                        }
+                        /// Create a native endian integer value from its memory representation as a
+                        /// byte array in native endianness.
+                        ///
+                        /// As the target platform’s native endianness is used, portable code likely
+                        /// wants to use `from_be_bytes` or `from_le_bytes`, as appropriate instead.
+                        pub fn from_ne_bytes(bytes: [u8; #bytes]) -> Self {
+                            // https://doc.rust-lang.org/reference/conditional-compilation.html#target_endian
+                            #[cfg(target_endian="big")]
+                            let ret = Self::from_be_bytes(bytes);
+                            #[cfg(target_endian="little")]
+                            let ret = Self::from_le_bytes(bytes);
+                            ret
+                        }
+
+                        /// Return the memory representation of this integer as a byte array in
+                        /// big-endian (network) byte order.
+                        pub fn to_be_bytes(self) -> [u8; #bytes] {
+                            let mut arr = self.0.to_be_bytes();
+                            array_rsplit_array_mut::<_,#inner_bytes,#bytes>(&mut arr).1.clone()
+                        }
+                        /// Return the memory representation of this integer as a byte array in
+                        /// little-endian byte order.
+                        pub fn to_le_bytes(self) -> [u8; #bytes] {
+                            let mut arr = self.0.to_le_bytes();
+                            array_split_array_mut::<_,#inner_bytes,#bytes>(&mut arr).0.clone()
+                        }
+                        /// Return the memory representation of this integer as a byte array in
+                        /// native byte order.
+                        ///
+                        /// As the target platform’s native endianness is used, portable code should
+                        /// use `to_be_bytes` or `to_le_bytes`, as appropriate, instead.
+                        pub fn to_ne_bytes(self) -> [u8; #bytes] {
+                            // https://doc.rust-lang.org/reference/conditional-compilation.html#target_endian
+                            #[cfg(target_endian="big")]
+                            let ret = self.to_be_bytes();
+                            #[cfg(target_endian="little")]
+                            let ret = self.to_be_bytes();
+                            ret
+                        }
                     }
 
                     impl std::ops::Add<&#unsigned_ident> for &#unsigned_ident {
@@ -585,6 +649,70 @@ pub fn generate_types(item: proc_macro::TokenStream) -> proc_macro::TokenStream 
                         /// ```
                         pub const fn abs(self) -> #signed_ident {
                             Self(self.0.abs())
+                        }
+
+                        /// Create a native endian integer value from its representation as a byte
+                        /// array in big endian.
+                        pub fn from_be_bytes(bytes: [u8; #bytes]) -> Self {
+                            let mut arr = [0u8; #inner_bytes];
+                            unsafe {
+                                (&mut arr[1] as *mut u8).copy_from_nonoverlapping(&bytes[0],#bytes);
+                            }
+                            Self(#signed_inner_ident::from_be_bytes(arr))
+                        }
+                        /// Create a native endian integer value from its representation as a byte
+                        /// array in little endian.
+                        pub fn from_le_bytes(bytes: [u8; #bytes]) -> Self {
+                            let mut arr = [0u8; #inner_bytes];
+                            unsafe {
+                                (&mut arr[0] as *mut u8).copy_from_nonoverlapping(&bytes[0],#bytes);
+                            }
+                            Self(#signed_inner_ident::from_le_bytes(arr))
+                        }
+                        /// Create a native endian integer value from its memory representation as a
+                        /// byte array in native endianness.
+                        ///
+                        /// As the target platform’s native endianness is used, portable code likely
+                        /// wants to use `from_be_bytes` or `from_le_bytes`, as appropriate instead.
+                        pub fn from_ne_bytes(bytes: [u8; #bytes]) -> Self {
+                            // https://doc.rust-lang.org/reference/conditional-compilation.html#target_endian
+                            #[cfg(target_endian="big")]
+                            let ret = Self::from_be_bytes(bytes);
+                            #[cfg(target_endian="little")]
+                            let ret = Self::from_le_bytes(bytes);
+                            ret
+                        }
+
+                        /// Return the memory representation of this integer as a byte array in
+                        /// big-endian (network) byte order.
+                        /// 
+                        /// Unused bits are undefined.
+                        pub fn to_be_bytes(self) -> [u8; #bytes] {
+                            let mut arr = self.0.to_be_bytes();
+                            array_rsplit_array_mut::<_,#inner_bytes,#bytes>(&mut arr).1.clone()
+                        }
+                        /// Return the memory representation of this integer as a byte array in
+                        /// little-endian byte order.
+                        /// 
+                        /// Unused bits are undefined.
+                        pub fn to_le_bytes(self) -> [u8; #bytes] {
+                            let mut arr = self.0.to_le_bytes();
+                            array_split_array_mut::<_,#inner_bytes,#bytes>(&mut arr).0.clone()
+                        }
+                        /// Return the memory representation of this integer as a byte array in
+                        /// native byte order.
+                        ///
+                        /// As the target platform’s native endianness is used, portable code should
+                        /// use `to_be_bytes` or `to_le_bytes`, as appropriate, instead.
+                        /// 
+                        /// Unused bits are undefined.
+                        pub fn to_ne_bytes(self) -> [u8; #bytes] {
+                            // https://doc.rust-lang.org/reference/conditional-compilation.html#target_endian
+                            #[cfg(target_endian="big")]
+                            let ret = self.to_be_bytes();
+                            #[cfg(target_endian="little")]
+                            let ret = self.to_be_bytes();
+                            ret
                         }
                     }
 

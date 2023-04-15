@@ -9,3 +9,32 @@ impl std::fmt::Display for TryFromIntError {
     }
 }
 impl std::error::Error for TryFromIntError {}
+
+/// https://doc.rust-lang.org/std/primitive.array.html#method.split_array_mut
+fn array_split_array_mut<T, const N: usize, const M: usize>(
+    array: &mut [T; N],
+) -> (&mut [T; M], &mut [T]) {
+    slice_split_array_mut::<_, M>(&mut array[..])
+}
+
+/// https://doc.rust-lang.org/std/primitive.array.html#method.rsplit_array_mut
+fn array_rsplit_array_mut<T, const N: usize, const M: usize>(
+    array: &mut [T; N],
+) -> (&mut [T], &mut [T; M]) {
+    slice_rsplit_array_mut::<_, M>(&mut array[..])
+}
+
+/// https://doc.rust-lang.org/std/primitive.slice.html#method.rsplit_array_mut
+fn slice_rsplit_array_mut<T, const N: usize>(slice: &mut [T]) -> (&mut [T], &mut [T; N]) {
+    assert!(N <= slice.len());
+    let (a, b) = slice.split_at_mut(slice.len() - N);
+    // SAFETY: b points to [T; N]? Yes it's [T] of length N (checked by split_at_mut)
+    unsafe { (a, &mut *(b.as_mut_ptr() as *mut [T; N])) }
+}
+
+/// https://doc.rust-lang.org/std/primitive.slice.html#method.split_array_mut
+fn slice_split_array_mut<T, const N: usize>(slice: &mut [T]) -> (&mut [T; N], &mut [T]) {
+    let (a, b) = slice.split_at_mut(N);
+    // SAFETY: a points to [T; N]? Yes it's [T] of length N (checked by split_at_mut)
+    unsafe { (&mut *(a.as_mut_ptr() as *mut [T; N]), b) }
+}
