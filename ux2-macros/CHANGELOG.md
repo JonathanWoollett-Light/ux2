@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.0](https://github.com/JonathanWoollett-Light/ux2/compare/ux2-macros-v0.3.0...ux2-macros-v0.4.0) (2023-04-15)
+
+
+### Features
+
+* Serde ([a7ef7d6](https://github.com/JonathanWoollett-Light/ux2/commit/a7ef7d604684d782970fb7cae7ecb648faf12dc8))
+
 ## [0.3.0](https://github.com/JonathanWoollett-Light/ux2/compare/ux2-macros-v0.2.0...ux2-macros-v0.3.0) (2023-04-15)
 
 
