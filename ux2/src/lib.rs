@@ -10,6 +10,16 @@ impl std::fmt::Display for TryFromIntError {
 }
 impl std::error::Error for TryFromIntError {}
 
+/// A mimic of [`std::num::ParseIntError`] that can constructed on stable.
+#[derive(Debug, Eq, PartialEq)]
+pub struct ParseIntError;
+impl std::fmt::Display for ParseIntError {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(f, "Failed `TryFrom`.")
+    }
+}
+impl std::error::Error for ParseIntError {}
+
 /// https://doc.rust-lang.org/std/primitive.array.html#method.split_array_mut
 fn array_split_array_mut<T, const N: usize, const M: usize>(
     array: &mut [T; N],

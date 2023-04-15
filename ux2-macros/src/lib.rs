@@ -408,6 +408,29 @@ pub fn generate_types(item: proc_macro::TokenStream) -> proc_macro::TokenStream 
                             let ret = self.to_be_bytes();
                             ret
                         }
+
+                        /// Converts a string slice in a given base to an integer.
+                        ///
+                        /// The string is expected to be an optional + sign followed by digits.
+                        /// Leading and trailing whitespace represent an error. Digits are a subset
+                        /// of these characters, depending on radix:
+                        /// 
+                        /// - `0-9`
+                        /// - `a-z`
+                        /// - `A-Z`
+                        /// 
+                        /// # Panics
+                        /// 
+                        /// This function panics if `radix` is not in the range from 2 to 36.
+                        pub fn from_str_radix(src: &str, radix: u32) -> Result<#unsigned_ident, ParseIntError> {
+                            let x = #unsigned_inner_ident::from_str_radix(src,radix).map_err(|_|ParseIntError)?;
+                            if (#unsigned_ident::MIN.0..#unsigned_ident::MAX.0).contains(&x) {
+                                Ok(Self(x))
+                            }
+                            else {
+                                Err(ParseIntError)
+                            }
+                        }
                     }
 
                     impl std::ops::Add<&#unsigned_ident> for &#unsigned_ident {
@@ -813,6 +836,29 @@ pub fn generate_types(item: proc_macro::TokenStream) -> proc_macro::TokenStream 
                             #[cfg(target_endian="little")]
                             let ret = self.to_be_bytes();
                             ret
+                        }
+
+                        /// Converts a string slice in a given base to an integer.
+                        ///
+                        /// The string is expected to be an optional + sign followed by digits.
+                        /// Leading and trailing whitespace represent an error. Digits are a subset
+                        /// of these characters, depending on radix:
+                        /// 
+                        /// - `0-9`
+                        /// - `a-z`
+                        /// - `A-Z`
+                        /// 
+                        /// # Panics
+                        /// 
+                        /// This function panics if `radix` is not in the range from 2 to 36.
+                        pub fn from_str_radix(src: &str, radix: u32) -> Result<#signed_ident, ParseIntError> {
+                            let x = #signed_inner_ident::from_str_radix(src,radix).map_err(|_|ParseIntError)?;
+                            if (#signed_ident::MIN.0..#signed_ident::MAX.0).contains(&x) {
+                                Ok(Self(x))
+                            }
+                            else {
+                                Err(ParseIntError)
+                            }
                         }
                     }
 
