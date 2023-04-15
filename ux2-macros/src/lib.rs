@@ -456,6 +456,35 @@ pub fn generate_types(item: proc_macro::TokenStream) -> proc_macro::TokenStream 
                         }
                     }
 
+                    impl std::ops::BitXor<&#unsigned_ident> for &#unsigned_ident {
+                        type Output = <#unsigned_ident as std::ops::BitXor<#unsigned_ident>>::Output;
+
+                        fn bitxor(self, rhs: &#unsigned_ident) -> Self::Output {
+                            #unsigned_ident(self.0 ^ rhs.0)
+                        }
+                    }
+                    impl std::ops::BitXor<&#unsigned_ident> for #unsigned_ident {
+                        type Output = <#unsigned_ident as std::ops::BitXor<#unsigned_ident>>::Output;
+
+                        fn bitxor(self, rhs: &#unsigned_ident) -> Self::Output {
+                            #unsigned_ident(self.0 ^ rhs.0)
+                        }
+                    }
+                    impl<'a> std::ops::BitXor<#unsigned_ident> for &'a #unsigned_ident {
+                        type Output = <#unsigned_ident as std::ops::BitXor<#unsigned_ident>>::Output;
+
+                        fn bitxor(self, rhs: #unsigned_ident) -> Self::Output {
+                            #unsigned_ident(self.0 ^ rhs.0)
+                        }
+                    }
+                    impl std::ops::BitXor<#unsigned_ident> for #unsigned_ident {
+                        type Output = Self;
+
+                        fn bitxor(self, rhs: Self) -> Self::Output {
+                            #unsigned_ident(self.0 ^ rhs.0)
+                        }
+                    }
+
                     impl std::ops::Not for #unsigned_ident {
                         type Output = Self;
 
@@ -634,6 +663,35 @@ pub fn generate_types(item: proc_macro::TokenStream) -> proc_macro::TokenStream 
 
                         fn bitor(self, rhs: Self) -> Self::Output {
                             #signed_ident(self.0 | rhs.0)
+                        }
+                    }
+
+                    impl std::ops::BitXor<&#signed_ident> for &#signed_ident {
+                        type Output = <#signed_ident as std::ops::BitXor<#signed_ident>>::Output;
+
+                        fn bitxor(self, rhs: &#signed_ident) -> Self::Output {
+                            #signed_ident(self.0 ^ rhs.0)
+                        }
+                    }
+                    impl std::ops::BitXor<&#signed_ident> for #signed_ident {
+                        type Output = <#signed_ident as std::ops::BitXor<#signed_ident>>::Output;
+
+                        fn bitxor(self, rhs: &#signed_ident) -> Self::Output {
+                            #signed_ident(self.0 ^ rhs.0)
+                        }
+                    }
+                    impl<'a> std::ops::BitXor<#signed_ident> for &'a #signed_ident {
+                        type Output = <#signed_ident as std::ops::BitXor<#signed_ident>>::Output;
+
+                        fn bitxor(self, rhs: #signed_ident) -> Self::Output {
+                            #signed_ident(self.0 ^ rhs.0)
+                        }
+                    }
+                    impl std::ops::BitXor<#signed_ident> for #signed_ident {
+                        type Output = Self;
+
+                        fn bitxor(self, rhs: Self) -> Self::Output {
+                            #signed_ident(self.0 ^ rhs.0)
                         }
                     }
 
