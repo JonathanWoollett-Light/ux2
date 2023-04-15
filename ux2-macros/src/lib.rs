@@ -5,12 +5,14 @@ use quote::{format_ident, quote};
 
 #[proc_macro]
 pub fn generate_types(item: proc_macro::TokenStream) -> proc_macro::TokenStream {
-    let max = match item.into_iter().next() {
+    let mut items = item.into_iter();
+    let max = match items.next() {
         Some(proc_macro::TokenTree::Literal(literal)) => {
             u8::from_str(&literal.to_string()).unwrap()
         }
-        _ => panic!("bad"),
+        x => panic!("Missing max size, found: {x:?}"),
     };
+    assert!(items.next().is_none());
 
     let output = (1..=max).map(|size| {
         match size {
