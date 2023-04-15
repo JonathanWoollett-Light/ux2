@@ -507,6 +507,39 @@ pub fn generate_types(item: proc_macro::TokenStream) -> proc_macro::TokenStream 
                         }
                     }
 
+                    impl std::ops::Div<&#unsigned_ident> for &#unsigned_ident {
+                        type Output = #unsigned_ident;
+                        fn div(self, rhs: &#unsigned_ident) -> Self::Output {
+                            let x = self.0 / rhs.0;
+                            debug_assert!((#unsigned_ident::MIN.0..#unsigned_ident::MAX.0).contains(&x));
+                            #unsigned_ident(x)
+                        }
+                    }
+                    impl std::ops::Div<&#unsigned_ident> for #unsigned_ident {
+                        type Output = #unsigned_ident;
+                        fn div(self, rhs: &#unsigned_ident) -> Self::Output {
+                            let x = self.0 / rhs.0;
+                            debug_assert!((#unsigned_ident::MIN.0..#unsigned_ident::MAX.0).contains(&x));
+                            #unsigned_ident(x)
+                        }
+                    }
+                    impl<'a> std::ops::Div<#unsigned_ident> for &'a #unsigned_ident {
+                        type Output = #unsigned_ident;
+                        fn div(self, rhs: #unsigned_ident) -> Self::Output {
+                            let x = self.0 / rhs.0;
+                            debug_assert!((#unsigned_ident::MIN.0..#unsigned_ident::MAX.0).contains(&x));
+                            #unsigned_ident(x)
+                        }
+                    }
+                    impl std::ops::Div<#unsigned_ident> for #unsigned_ident {
+                        type Output = #unsigned_ident;
+                        fn div(self, rhs: #unsigned_ident) -> Self::Output {
+                            let x = self.0 / rhs.0;
+                            debug_assert!((#unsigned_ident::MIN.0..#unsigned_ident::MAX.0).contains(&x));
+                            #unsigned_ident(x)
+                        }
+                    }
+
                     impl std::fmt::Binary for #unsigned_ident {
                         fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
                             std::fmt::Binary::fmt(&self.0, f)
@@ -842,6 +875,39 @@ pub fn generate_types(item: proc_macro::TokenStream) -> proc_macro::TokenStream 
                         type Output = #signed_ident;
                         fn mul(self, rhs: #signed_ident) -> Self::Output {
                             let x = self.0 * rhs.0;
+                            debug_assert!((#signed_ident::MIN.0..#signed_ident::MAX.0).contains(&x));
+                            #signed_ident(x)
+                        }
+                    }
+
+                    impl std::ops::Div<&#signed_ident> for &#signed_ident {
+                        type Output = #signed_ident;
+                        fn div(self, rhs: &#signed_ident) -> Self::Output {
+                            let x = self.0 / rhs.0;
+                            debug_assert!((#signed_ident::MIN.0..#signed_ident::MAX.0).contains(&x));
+                            #signed_ident(x)
+                        }
+                    }
+                    impl std::ops::Div<&#signed_ident> for #signed_ident {
+                        type Output = #signed_ident;
+                        fn div(self, rhs: &#signed_ident) -> Self::Output {
+                            let x = self.0 / rhs.0;
+                            debug_assert!((#signed_ident::MIN.0..#signed_ident::MAX.0).contains(&x));
+                            #signed_ident(x)
+                        }
+                    }
+                    impl<'a> std::ops::Div<#signed_ident> for &'a #signed_ident {
+                        type Output = #signed_ident;
+                        fn div(self, rhs: #signed_ident) -> Self::Output {
+                            let x = self.0 / rhs.0;
+                            debug_assert!((#signed_ident::MIN.0..#signed_ident::MAX.0).contains(&x));
+                            #signed_ident(x)
+                        }
+                    }
+                    impl std::ops::Div<#signed_ident> for #signed_ident {
+                        type Output = #signed_ident;
+                        fn div(self, rhs: #signed_ident) -> Self::Output {
+                            let x = self.0 / rhs.0;
                             debug_assert!((#signed_ident::MIN.0..#signed_ident::MAX.0).contains(&x));
                             #signed_ident(x)
                         }
