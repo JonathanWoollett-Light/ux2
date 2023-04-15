@@ -723,6 +723,35 @@ pub fn generate_types(item: proc_macro::TokenStream) -> proc_macro::TokenStream 
 
                     #unsigned_from_implementations
 
+                    #[cfg(feature="num-traits")]
+                    impl num_traits::identities::One for #unsigned_ident {
+                        fn one() -> Self {
+                            use num_traits::identities::One;
+                            Self(#unsigned_inner_ident::one())
+                        }
+                    }
+                    #[cfg(feature="num-traits")]
+                    impl num_traits::identities::Zero for #unsigned_ident {
+                        fn zero() -> Self {
+                            use num_traits::identities::Zero;
+                            Self(#unsigned_inner_ident::zero())
+                        }
+                        fn is_zero(&self) -> bool {
+                            *self == Self::zero()
+                        }
+                    }
+                    #[cfg(feature="num-traits")]
+                    impl num_traits::Num for #unsigned_ident {
+                        type FromStrRadixErr = ParseIntError;
+
+                        fn from_str_radix(
+                            str: &str,
+                            radix: u32,
+                        ) -> Result<Self, Self::FromStrRadixErr> {
+                            Self::from_str_radix(str,radix)
+                        }
+                    }
+
                     #[doc=#signed_doc]
                     #[derive(Debug, Eq, PartialEq, Ord, PartialOrd, Clone, Copy, Hash)]
                     pub struct #signed_ident(#signed_inner_ident);
@@ -1151,6 +1180,35 @@ pub fn generate_types(item: proc_macro::TokenStream) -> proc_macro::TokenStream 
                     }
 
                     #signed_from_implementations
+
+                    #[cfg(feature="num-traits")]
+                    impl num_traits::identities::One for #signed_ident {
+                        fn one() -> Self {
+                            use num_traits::identities::One;
+                            Self(#signed_inner_ident::one())
+                        }
+                    }
+                    #[cfg(feature="num-traits")]
+                    impl num_traits::identities::Zero for #signed_ident {
+                        fn zero() -> Self {
+                            use num_traits::identities::Zero;
+                            Self(#signed_inner_ident::zero())
+                        }
+                        fn is_zero(&self) -> bool {
+                            *self == Self::zero()
+                        }
+                    }
+                    #[cfg(feature="num-traits")]
+                    impl num_traits::Num for #signed_ident {
+                        type FromStrRadixErr = ParseIntError;
+
+                        fn from_str_radix(
+                            str: &str,
+                            radix: u32,
+                        ) -> Result<Self, Self::FromStrRadixErr> {
+                            Self::from_str_radix(str,radix)
+                        }
+                    }
                 }
             }
         }
