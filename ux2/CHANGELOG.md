@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.4.0](https://github.com/JonathanWoollett-Light/ux2/compare/ux2-v0.3.0...ux2-v0.4.0) (2023-04-15)
+
+
+### Features
+
+* Serde ([a7ef7d6](https://github.com/JonathanWoollett-Light/ux2/commit/a7ef7d604684d782970fb7cae7ecb648faf12dc8))
+* Update ux2-macro version ([6630f6e](https://github.com/JonathanWoollett-Light/ux2/commit/6630f6e69daca0954bf417d5a2456f679c6bfcaf))
+
 ## [0.3.0](https://github.com/JonathanWoollett-Light/ux2/compare/ux2-v0.2.0...ux2-v0.3.0) (2023-04-15)
 
 
