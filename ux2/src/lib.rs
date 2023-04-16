@@ -1,3 +1,6 @@
+#![cfg_attr(docsrs, feature(doc_auto_cfg))]
+// https://doc.rust-lang.org/rustdoc/unstable-features.html#doc_auto_cfg-automatically-generate-doccfg
+
 ux2_macros::generate_types!(128);
 
 /// A mimic of [`std::num::TryFromIntError`] that can constructed on stable.
