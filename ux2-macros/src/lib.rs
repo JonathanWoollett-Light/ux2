@@ -439,6 +439,14 @@ pub fn generate_types(item: proc_macro::TokenStream) -> proc_macro::TokenStream 
                             debug_assert!((#unsigned_ident::MIN.0..#unsigned_ident::MAX.0).contains(&x));
                             Self(x)
                         }
+
+                        /// Checked integer addition. Computes `self + rhs`, returning `None` if overflow occurred.
+                        pub fn checked_add(self, rhs: #unsigned_ident) -> Option<#unsigned_ident> {
+                            match self.0.checked_add(rhs.0) {
+                                Some(x) if (#unsigned_ident::MIN.0..#unsigned_ident::MAX.0).contains(&x) => Some(Self(x)),
+                                _ => None
+                            }
+                        }
                     }
 
                     impl std::ops::Add<&#unsigned_ident> for &#unsigned_ident {
@@ -904,6 +912,14 @@ pub fn generate_types(item: proc_macro::TokenStream) -> proc_macro::TokenStream 
                             let x = self.0.pow(exp);
                             debug_assert!((#signed_ident::MIN.0..#signed_ident::MAX.0).contains(&x));
                             Self(x)
+                        }
+
+                        /// Checked integer addition. Computes `self + rhs`, returning `None` if overflow occurred.
+                        pub fn checked_add(self, rhs: #signed_ident) -> Option<#signed_ident> {
+                            match self.0.checked_add(rhs.0) {
+                                Some(x) if (#signed_ident::MIN.0..#signed_ident::MAX.0).contains(&x) => Some(Self(x)),
+                                _ => None
+                            }
                         }
                     }
 
