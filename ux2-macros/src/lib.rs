@@ -432,6 +432,13 @@ pub fn generate_types(item: proc_macro::TokenStream) -> proc_macro::TokenStream 
                                 Err(ParseIntError)
                             }
                         }
+
+                        /// Raises self to the power of `exp`, using exponentiation by squaring.
+                        pub fn pow(self, exp: u32) -> #unsigned_ident {
+                            let x = self.0.pow(exp);
+                            debug_assert!((#unsigned_ident::MIN.0..#unsigned_ident::MAX.0).contains(&x));
+                            Self(x)
+                        }
                     }
 
                     impl std::ops::Add<&#unsigned_ident> for &#unsigned_ident {
@@ -890,6 +897,13 @@ pub fn generate_types(item: proc_macro::TokenStream) -> proc_macro::TokenStream 
                             else {
                                 Err(ParseIntError)
                             }
+                        }
+
+                        /// Raises self to the power of `exp`, using exponentiation by squaring.
+                        pub fn pow(self, exp: u32) -> #signed_ident {
+                            let x = self.0.pow(exp);
+                            debug_assert!((#signed_ident::MIN.0..#signed_ident::MAX.0).contains(&x));
+                            Self(x)
                         }
                     }
 
