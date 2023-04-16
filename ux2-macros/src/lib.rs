@@ -461,6 +461,13 @@ pub fn generate_types(item: proc_macro::TokenStream) -> proc_macro::TokenStream 
                                 _ => None
                             }
                         }
+                        /// Checked integer subtraction. Computes `self - rhs`, returning `None` if overflow occurred.
+                        pub fn checked_sub(self, rhs: #unsigned_ident) -> Option<#unsigned_ident> {
+                            match self.0.checked_sub(rhs.0) {
+                                Some(x) if (#unsigned_ident::MIN.0..#unsigned_ident::MAX.0).contains(&x) => Some(Self(x)),
+                                _ => None
+                            }
+                        }
                     }
 
                     impl std::ops::Add<&#unsigned_ident> for &#unsigned_ident {
@@ -945,6 +952,13 @@ pub fn generate_types(item: proc_macro::TokenStream) -> proc_macro::TokenStream 
                         /// Checked integer multiplication. Computes `self * rhs`, returning `None` if overflow occurred.
                         pub fn checked_mul(self, rhs: #signed_ident) -> Option<#signed_ident> {
                             match self.0.checked_mul(rhs.0) {
+                                Some(x) if (#signed_ident::MIN.0..#signed_ident::MAX.0).contains(&x) => Some(Self(x)),
+                                _ => None
+                            }
+                        }
+                        /// Checked integer subtraction. Computes `self - rhs`, returning `None` if overflow occurred.
+                        pub fn checked_sub(self, rhs: #signed_ident) -> Option<#signed_ident> {
+                            match self.0.checked_sub(rhs.0) {
                                 Some(x) if (#signed_ident::MIN.0..#signed_ident::MAX.0).contains(&x) => Some(Self(x)),
                                 _ => None
                             }
