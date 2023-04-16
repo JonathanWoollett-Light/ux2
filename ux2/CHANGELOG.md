@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.0](https://github.com/JonathanWoollett-Light/ux2/compare/ux2-v0.4.0...ux2-v0.5.0) (2023-04-16)
+
+
+### Features
+
+* Update ux2-macro version ([8d41ca7](https://github.com/JonathanWoollett-Light/ux2/commit/8d41ca70f8957995941115d0bf09ab2169572096))
+
 ## [0.4.0](https://github.com/JonathanWoollett-Light/ux2/compare/ux2-v0.3.0...ux2-v0.4.0) (2023-04-15)
 
 
