@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.5.0](https://github.com/JonathanWoollett-Light/ux2/compare/ux2-macros-v0.4.0...ux2-macros-v0.5.0) (2023-04-16)
+
+
+### Features
+
+* `checked_add` ([2cdd098](https://github.com/JonathanWoollett-Light/ux2/commit/2cdd09836cd699c73cc3d0832b3338b906eebb15))
+* `checked_div` ([86e9cb4](https://github.com/JonathanWoollett-Light/ux2/commit/86e9cb41355fc81a5e5193c7592506082cc77d81))
+* `checked_mul` ([4648047](https://github.com/JonathanWoollett-Light/ux2/commit/4648047b47b85190ea7b07ed74a7604df510e3af))
+* `checked_sub` ([8c49ea4](https://github.com/JonathanWoollett-Light/ux2/commit/8c49ea42c29ed568545eb3310eb0b6428aff048e))
+* Pow ([bafbb8b](https://github.com/JonathanWoollett-Light/ux2/commit/bafbb8b8ab0dcfbc54e98b771806a728c479d067))
+
 ## [0.4.0](https://github.com/JonathanWoollett-Light/ux2/compare/ux2-macros-v0.3.0...ux2-macros-v0.4.0) (2023-04-15)
 
 
