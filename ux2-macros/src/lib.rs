@@ -1296,6 +1296,14 @@ pub fn generate_types(item: proc_macro::TokenStream) -> proc_macro::TokenStream 
                         }
                     }
 
+                    impl std::ops::Neg for #signed_ident {
+                        type Output = Self;
+                        fn neg(self) -> Self::Output {
+                            assert_ne!(self,Self::MIN);
+                            #signed_ident(-self.0)
+                        }
+                    }
+
                     impl std::ops::Not for #signed_ident {
                         type Output = Self;
 
