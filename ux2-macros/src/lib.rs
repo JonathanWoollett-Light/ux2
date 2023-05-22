@@ -513,6 +513,12 @@ pub fn generate_types(item: proc_macro::TokenStream) -> proc_macro::TokenStream 
                         pub fn wrapping_add(self, rhs: #unsigned_ident) -> #unsigned_ident {
                             Self(self.0 + rhs.0).mask()
                         }
+
+                        /// Wrapping (modular) subtraction. Computes `self - rhs`, wrapping around
+                        /// at the boundary of the type.
+                        pub fn wrapping_sub(self, rhs: #unsigned_ident) -> #unsigned_ident {
+                            Self(self.0 - rhs.0).mask()
+                        }
                     }
 
                     impl std::ops::Add<&#unsigned_ident> for &#unsigned_ident {
@@ -1032,6 +1038,12 @@ pub fn generate_types(item: proc_macro::TokenStream) -> proc_macro::TokenStream 
                         /// ```
                         pub fn wrapping_add(self, rhs: #signed_ident) -> #signed_ident {
                             Self(self.0 + rhs.0).mask()
+                        }
+
+                        /// Wrapping (modular) subtraction. Computes `self - rhs`, wrapping around
+                        /// at the boundary of the type.
+                        pub fn wrapping_sub(self, rhs: #signed_ident) -> #signed_ident {
+                            Self(self.0 - rhs.0).mask()
                         }
                     }
 
