@@ -66,9 +66,18 @@ pub fn generate_types(item: proc_macro::TokenStream) -> proc_macro::TokenStream 
                     65..=128 => Literal::u128_suffixed(0),
                     129.. => unreachable!()
                 };
+                let unsigned_one = match size {
+                    0..=8 => Literal::u8_suffixed(1),
+                    9..=16 => Literal::u16_suffixed(1),
+                    17..=32 => Literal::u32_suffixed(1),
+                    33..=64 => Literal::u64_suffixed(1),
+                    65..=128 => Literal::u128_suffixed(1),
+                    129.. => unreachable!()
+                };
                 let unsigned_max_doc = format!(" assert_eq!({unsigned_ident}::MAX, {unsigned_ident}::try_from({unsigned_max_ident}).unwrap());");
                 let unsigned_min_doc = format!(" assert_eq!({unsigned_ident}::MIN, {unsigned_ident}::try_from({unsigned_min_ident}).unwrap());");
                 let unsigned_bits_doc = format!("assert_eq!({unsigned_ident}::BITS, {size});");
+                let unsigned_wrapping_add_examples = format!(" assert_eq!({unsigned_ident}::MAX.wrapping_add({unsigned_ident}::try_from({unsigned_one}).unwrap()), {unsigned_ident}::MIN);");
 
                 let signed_doc = format!(" The {size}-bit signed integer type.");
                 let signed_inner_ident = format_ident!("i{inner_size}");
@@ -90,9 +99,19 @@ pub fn generate_types(item: proc_macro::TokenStream) -> proc_macro::TokenStream 
                     65..=128 => Literal::i128_suffixed(-(signed_max as i128)-1),
                     129.. => unreachable!()
                 };
+                let signed_one = match size {
+                    0..=8 => Literal::i8_suffixed(-1),
+                    9..=16 => Literal::i16_suffixed(-1),
+                    17..=32 => Literal::i32_suffixed(-1),
+                    33..=64 => Literal::i64_suffixed(-1),
+                    65..=128 => Literal::i128_suffixed(-1),
+                    129.. => unreachable!()
+                };
+
                 let signed_max_doc = format!(" assert_eq!({signed_ident}::MAX, {signed_ident}::try_from({signed_max_ident}).unwrap());");
                 let signed_min_doc = format!(" assert_eq!({signed_ident}::MIN, {signed_ident}::try_from({signed_min_ident}).unwrap());");
                 let signed_bits_doc = format!(" assert_eq!({signed_ident}::BITS, {size});");
+                let signed_wrapping_add_examples = format!(" assert_eq!({signed_ident}::MIN.wrapping_add({signed_ident}::try_from({signed_one}).unwrap()), {signed_ident}::MAX);");
                 // TODO This is not correct, correct this.
                 let signed_abs_doc = format!(" The absolute value of `{signed_ident}::MIN` cannot be represented as an `{signed_ident}`, and attempting to calculate it will cause an overflow. This means that code in debug mode will trigger a panic on this case and optimized code will return `{signed_ident}::MIN` without a panic.");
                 let signed_abs_doc_example_one = format!(" assert_eq!({signed_ident}::MAX.abs(), {signed_ident}::MAX);");
@@ -467,6 +486,20 @@ pub fn generate_types(item: proc_macro::TokenStream) -> proc_macro::TokenStream 
                                 Some(x) if (#unsigned_ident::MIN.0..#unsigned_ident::MAX.0).contains(&x) => Some(Self(x)),
                                 _ => None
                             }
+                        }
+                        /// Wrapping (modular) addition. Computes `self + rhs`, wrapping around at
+                        /// the boundary of the type.
+                        ///
+                        /// # Examples
+                        ///
+                        /// Basic usage:
+                        ///
+                        /// ```
+                        /// # use ux2::*;
+                        #[doc=#unsigned_wrapping_add_examples]
+                        /// ```
+                        pub fn wrapping_add(self, rhs: #unsigned_ident) -> #unsigned_ident {
+                            Self((self.0 + rhs.0) % (Self::MAX.0+1))
                         }
                     }
 
@@ -962,6 +995,31 @@ pub fn generate_types(item: proc_macro::TokenStream) -> proc_macro::TokenStream 
                                 Some(x) if (#signed_ident::MIN.0..#signed_ident::MAX.0).contains(&x) => Some(Self(x)),
                                 _ => None
                             }
+                        }
+
+                        /// Wrapping (modular) addition. Computes `self + rhs`, wrapping around at
+                        /// the boundary of the type.
+                        ///
+                        /// # Examples
+                        ///
+                        /// Basic usage:
+                        ///
+                        /// ```
+                        /// # use ux2::*;
+                        #[doc=#signed_wrapping_add_examples]
+                        /// ```
+                        pub fn wrapping_add(self, rhs: #signed_ident) -> #signed_ident {
+                            let (x,y) = (self.0,rhs.0);
+                            let z = if ((x > 0) && (y > Self::MAX.0 - x)) {
+                                (x + Self::MIN.0) + (y + Self::MIN.0)
+                            }
+                            else if ((x < 0) && (y < Self::MIN.0 - x)) {
+                                (x - Self::MIN.0) + (y - Self::MIN.0)
+                            }
+                            else {
+                                x + y
+                            };
+                            Self(z)
                         }
                     }
 
