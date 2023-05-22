@@ -99,7 +99,7 @@ pub fn generate_types(item: proc_macro::TokenStream) -> proc_macro::TokenStream 
                     65..=128 => Literal::i128_suffixed(-(signed_max as i128)-1),
                     129.. => unreachable!()
                 };
-                let signed_one = match size {
+                let signed_minus_one = match size {
                     0..=8 => Literal::i8_suffixed(-1),
                     9..=16 => Literal::i16_suffixed(-1),
                     17..=32 => Literal::i32_suffixed(-1),
@@ -107,11 +107,19 @@ pub fn generate_types(item: proc_macro::TokenStream) -> proc_macro::TokenStream 
                     65..=128 => Literal::i128_suffixed(-1),
                     129.. => unreachable!()
                 };
+                let signed_one = match size {
+                    0..=8 => Literal::i8_suffixed(1),
+                    9..=16 => Literal::i16_suffixed(1),
+                    17..=32 => Literal::i32_suffixed(1),
+                    33..=64 => Literal::i64_suffixed(1),
+                    65..=128 => Literal::i128_suffixed(1),
+                    129.. => unreachable!()
+                };
 
                 let signed_max_doc = format!(" assert_eq!({signed_ident}::MAX, {signed_ident}::try_from({signed_max_ident}).unwrap());");
                 let signed_min_doc = format!(" assert_eq!({signed_ident}::MIN, {signed_ident}::try_from({signed_min_ident}).unwrap());");
                 let signed_bits_doc = format!(" assert_eq!({signed_ident}::BITS, {size});");
-                let signed_wrapping_add_examples = format!(" assert_eq!({signed_ident}::MIN.wrapping_add({signed_ident}::try_from({signed_one}).unwrap()), {signed_ident}::MAX);");
+                let signed_wrapping_add_examples = format!(" assert_eq!({signed_ident}::MIN.wrapping_add({signed_ident}::try_from({signed_minus_one}).unwrap()), {signed_ident}::MAX);");
                 // TODO This is not correct, correct this.
                 let signed_abs_doc = format!(" The absolute value of `{signed_ident}::MIN` cannot be represented as an `{signed_ident}`, and attempting to calculate it will cause an overflow. This means that code in debug mode will trigger a panic on this case and optimized code will return `{signed_ident}::MIN` without a panic.");
                 let signed_abs_doc_example_one = format!(" assert_eq!({signed_ident}::MAX.abs(), {signed_ident}::MAX);");
@@ -341,6 +349,10 @@ pub fn generate_types(item: proc_macro::TokenStream) -> proc_macro::TokenStream 
                     #[derive(Debug, Eq, PartialEq, Ord, PartialOrd, Clone, Copy, Hash)]
                     pub struct #unsigned_ident(#unsigned_inner_ident);
                     impl #unsigned_ident {
+                        fn mask(self) -> Self {
+                            Self(self.0 & (#unsigned_one << #size).overflowing_sub(#unsigned_one).0)
+                        }
+
                         /// The smallest value that can be represented by this integer type.
                         /// 
                         /// # Examples
@@ -499,7 +511,7 @@ pub fn generate_types(item: proc_macro::TokenStream) -> proc_macro::TokenStream 
                         #[doc=#unsigned_wrapping_add_examples]
                         /// ```
                         pub fn wrapping_add(self, rhs: #unsigned_ident) -> #unsigned_ident {
-                            Self((self.0 + rhs.0) % (Self::MAX.0+1))
+                            Self(self.0 + rhs.0).mask()
                         }
                     }
 
@@ -827,6 +839,16 @@ pub fn generate_types(item: proc_macro::TokenStream) -> proc_macro::TokenStream 
                     #[derive(Debug, Eq, PartialEq, Ord, PartialOrd, Clone, Copy, Hash)]
                     pub struct #signed_ident(#signed_inner_ident);
                     impl #signed_ident {
+                        fn mask(self) -> Self {
+                            let x = if self.0 & (#signed_one << (#size - 1)) == 0 {
+                                self.0 & (#signed_one << #size).overflowing_sub(#signed_one).0
+                            }
+                            else {
+                                self.0 | !(#signed_one << #size).overflowing_sub(#signed_one).0
+                            };
+                            Self(x)
+                        }
+
                         /// The smallest value that can be represented by this integer type.
                         /// 
                         /// # Examples
@@ -1009,17 +1031,7 @@ pub fn generate_types(item: proc_macro::TokenStream) -> proc_macro::TokenStream 
                         #[doc=#signed_wrapping_add_examples]
                         /// ```
                         pub fn wrapping_add(self, rhs: #signed_ident) -> #signed_ident {
-                            let (x,y) = (self.0,rhs.0);
-                            let z = if ((x > 0) && (y > Self::MAX.0 - x)) {
-                                (x + Self::MIN.0) + (y + Self::MIN.0)
-                            }
-                            else if ((x < 0) && (y < Self::MIN.0 - x)) {
-                                (x - Self::MIN.0) + (y - Self::MIN.0)
-                            }
-                            else {
-                                x + y
-                            };
-                            Self(z)
+                            Self(self.0 + rhs.0).mask()
                         }
                     }
 
