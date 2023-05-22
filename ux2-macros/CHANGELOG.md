@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.6.0](https://github.com/JonathanWoollett-Light/ux2/compare/ux2-macros-v0.5.0...ux2-macros-v0.6.0) (2023-05-22)
+
+
+### Features
+
+* `Neg` ([95de4a1](https://github.com/JonathanWoollett-Light/ux2/commit/95de4a153776d07fa032fec98f9a4c2c50783d0c))
+* `wrapping_add` ([e419971](https://github.com/JonathanWoollett-Light/ux2/commit/e41997163d4b729edd39b7c0b770dea33ec568ee))
+* `wrapping_sub` ([357c6fd](https://github.com/JonathanWoollett-Light/ux2/commit/357c6fd46740358bb7ac113b28b06ad4e0f16ba0))
+
+
+### Bug Fixes
+
+* Use `mask` for `wrapping_add` ([c77614f](https://github.com/JonathanWoollett-Light/ux2/commit/c77614f817637a12a1601202a1ce08d00e5cb210))
+
 ## [0.5.0](https://github.com/JonathanWoollett-Light/ux2/compare/ux2-macros-v0.4.0...ux2-macros-v0.5.0) (2023-04-16)
 
 
