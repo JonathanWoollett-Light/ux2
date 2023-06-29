@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.7.0](https://github.com/JonathanWoollett-Light/ux2/compare/ux2-macros-v0.6.0...ux2-macros-v0.7.0) (2023-06-29)
+
+
+### Features
+
+* Remove re-exports + fixes ([6c75962](https://github.com/JonathanWoollett-Light/ux2/commit/6c75962972891e371f86e2998af4ee3109f4d312))
+* Signed `growing_add` & `growing_sub` ([34f1d42](https://github.com/JonathanWoollett-Light/ux2/commit/34f1d42e69d0794f1cf9ae067e39c964e03e7e48))
+* Unsigned `growing_add` ([235357e](https://github.com/JonathanWoollett-Light/ux2/commit/235357e1834084df286e7e626d224f03c735c519))
+
 ## [0.6.0](https://github.com/JonathanWoollett-Light/ux2/compare/ux2-macros-v0.5.0...ux2-macros-v0.6.0) (2023-05-22)
 
 
