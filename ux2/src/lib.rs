@@ -3,7 +3,7 @@
 
 ux2_macros::generate_types!(128);
 
-/// A mimic of [`std::num::TryFromIntError`] that can constructed on stable.
+/// A mimic of [`std::num::TryFromIntError`] that can be constructed on stable.
 #[derive(Debug, Eq, PartialEq)]
 pub struct TryFromIntError;
 impl std::fmt::Display for TryFromIntError {
@@ -13,7 +13,7 @@ impl std::fmt::Display for TryFromIntError {
 }
 impl std::error::Error for TryFromIntError {}
 
-/// A mimic of [`std::num::ParseIntError`] that can constructed on stable.
+/// A mimic of [`std::num::ParseIntError`] that can be constructed on stable.
 #[derive(Debug, Eq, PartialEq)]
 pub struct ParseIntError;
 impl std::fmt::Display for ParseIntError {
