@@ -141,6 +141,25 @@ pub fn generate_types(item: proc_macro::TokenStream) -> proc_macro::TokenStream 
                 }else {
                     format!(" assert_eq!(({signed_ident}::MIN + {signed_ident}::try_from(1i8).unwrap()).abs(), {signed_ident}::MAX);")
                 };
+                let signed_growing_ops = if size == max {
+                    quote! {}
+                }
+                else {
+                    let signed_ident_plus_one = format_ident!("i{}",size + 1);
+                    quote! {
+                        /// Growing addition. Compute `self + rhs` returning a larger output type
+                        /// guaranteed to be able to contain the result.
+                        pub fn growing_add(self, rhs: #signed_ident) -> #signed_ident_plus_one {
+                            #signed_ident_plus_one(unsafe { <#signed_ident_plus_one>::from(self.0).0.unchecked_add(<#signed_ident_plus_one>::from(rhs.0).0) })
+                        }
+
+                        /// Growing subtraction. Compute `self - rhs` returning a larger output type
+                        /// guaranteed to be able to contain the result.
+                        pub fn growing_sub(self, rhs: #signed_ident) -> #signed_ident_plus_one {
+                            #signed_ident_plus_one(unsafe { <#signed_ident_plus_one>::from(self.0).0.unchecked_sub(<#signed_ident_plus_one>::from(rhs.0).0) })
+                        }
+                    }
+                };
 
                 let unsigned_from_implementations = {
                     let smaller = (1..size).map(|s| {
@@ -1060,6 +1079,8 @@ pub fn generate_types(item: proc_macro::TokenStream) -> proc_macro::TokenStream 
                         pub fn wrapping_sub(self, rhs: #signed_ident) -> #signed_ident {
                             Self(self.0 - rhs.0).mask()
                         }
+
+                        #signed_growing_ops
                     }
 
                     impl std::ops::Add<&#signed_ident> for &#signed_ident {
