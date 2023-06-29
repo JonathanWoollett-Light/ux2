@@ -78,6 +78,19 @@ pub fn generate_types(item: proc_macro::TokenStream) -> proc_macro::TokenStream 
                 let unsigned_min_doc = format!(" assert_eq!({unsigned_ident}::MIN, {unsigned_ident}::try_from({unsigned_min_ident}).unwrap());");
                 let unsigned_bits_doc = format!("assert_eq!({unsigned_ident}::BITS, {size});");
                 let unsigned_wrapping_add_examples = format!(" assert_eq!({unsigned_ident}::MAX.wrapping_add({unsigned_ident}::try_from({unsigned_one}).unwrap()), {unsigned_ident}::MIN);");
+                let unsigned_growing_add = if size == max {
+                    quote! {}
+                }
+                else {
+                    let unsigned_ident_plus_one = format_ident!("u{}",size + 1);
+                    quote! {
+                        /// Growing addition. Compute `self + rhs` returning a larger output type
+                        /// guaranteed to be able to contain the result.
+                        pub fn growing_add(self, rhs: #unsigned_ident) -> #unsigned_ident_plus_one {
+                            #unsigned_ident_plus_one(unsafe { <#unsigned_ident_plus_one>::from(self.0).0.unchecked_add(<#unsigned_ident_plus_one>::from(rhs.0).0) })
+                        }
+                    }
+                };
 
                 let signed_doc = format!(" The {size}-bit signed integer type.");
                 let signed_inner_ident = format_ident!("i{inner_size}");
@@ -519,6 +532,8 @@ pub fn generate_types(item: proc_macro::TokenStream) -> proc_macro::TokenStream 
                         pub fn wrapping_sub(self, rhs: #unsigned_ident) -> #unsigned_ident {
                             Self(self.0 - rhs.0).mask()
                         }
+
+                        #unsigned_growing_add
                     }
 
                     impl std::ops::Add<&#unsigned_ident> for &#unsigned_ident {
