@@ -11,10 +11,25 @@ readme = "../README.md"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+[features]
+default = ["32"]
+128 = ["64"]
+64 = ["32"]
+32 = ["16"]
+16 = ["8"]
+8 = []
+
 [dependencies]
 ux2-macros =  { path ="../ux2-macros", version = "0.7.0" }
-num-traits = { version = "0.2.15", optional = true }
 serde = { version = "1.0.160", features = ["derive"], optional = true }
+
+[dev-dependencies]
+criterion = "0.5.1"
+rand = "0.8.5"
+
+[[bench]]
+name = "benchmark"
+harness = false
 
 # test with `RUSTDOCFLAGS="--cfg docsrs" cargo rustdoc --open --all-features`
 [package.metadata.docs.rs]

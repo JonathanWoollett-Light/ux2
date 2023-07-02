@@ -59,102 +59,187 @@ pub fn generate_types(item: proc_macro::TokenStream) -> proc_macro::TokenStream 
             129.. => unreachable!()
         };
 
-
         let unsigned_max_doc = format!(" assert_eq!({unsigned_ident}::MAX, {unsigned_ident}::try_from({unsigned_max_ident}).unwrap());");
         let unsigned_min_doc = format!(" assert_eq!({unsigned_ident}::MIN, {unsigned_ident}::try_from({unsigned_min_ident}).unwrap());");
         let unsigned_bits_doc = format!("assert_eq!({unsigned_ident}::BITS, {size});");
         let unsigned_wrapping_add_examples = format!(" assert_eq!({unsigned_ident}::MAX.wrapping_add({unsigned_ident}::try_from({unsigned_one}).unwrap()), {unsigned_ident}::MIN);");
-        let unsigned_growing_add = if size == max {
-            quote! {}
-        }
-        else {
-            let unsigned_ident_plus_one = format_ident!("u{}",size + 1);
-            // On `x86` `reg` does not support 8-bit registers, instead this is `reg_byte`.
-            // See https://doc.rust-lang.org/reference/inline-assembly.html.
-            // ```text
-            // Architecture	Register    class	    Target feature	Allowed types
-            // x86-32	                reg	        None	        i16, i32, f32
-            // x86-64	                reg	        None	        i16, i32, f32, i64, f64
-            // x86	                    reg_byte	None	        i8
-            // ```
-            let (add_inner, sub_inner) = if cfg!(target_arch="x86_64") && size < 8 {
-                (
-                    quote! {
-                        std::arch::asm! {
-                            "add {x}, {y}",
-                            x = inout(reg_byte) x,
-                            y = in(reg_byte) y,
-                        }
-                    },
-                    quote! {
-                        std::arch::asm! {
-                            "sub {x}, {y}",
-                            x = inout(reg_byte) x,
-                            y = in(reg_byte) y,
-                        }
-                    }
-                )
-            }
-            // Registers do not support i128s & u128s.
-            else if size >= 64 {
-                (
-                    quote!{
-                        x += y;
-                    },
-                    quote!{
-                        x -= y;
-                    }
-                )
-            }
-            else {
-                (
-                    quote! {
-                        std::arch::asm! {
-                            "add {x}, {y}",
-                            x = inout(reg) x,
-                            y = in(reg) y,
-                        }
-                    },
-                    quote! {
-                        std::arch::asm! {
-                            "sub {x}, {y}",
-                            x = inout(reg) x,
-                            y = in(reg) y,
-                        }
-                    }
-                )
-            };
+
+        let unsigned_add_ops = (1..max).filter(|rhs| std::cmp::max(rhs,&size) < &max).map(|s| {
+            let rhs_ident = format_ident!("u{s}");
+            let out_size = std::cmp::max(size,s) + 1;
+            let out_ident = format_ident!("u{out_size}");
+
             quote! {
-                impl #unsigned_ident {
-                    /// Growing addition. Compute `self + rhs` returning an output type guaranteed
-                    /// to be able to contain the result.
-                    /// 
-                    /// Since `unchecked_math` is nightly only, this uses inline assembly.
-                    pub fn growing_add(self, rhs: #unsigned_ident) -> #unsigned_ident_plus_one {
-                        let mut x = <#unsigned_ident_plus_one>::from(self).0;
-                        let y = <#unsigned_ident_plus_one>::from(rhs).0;
-                        unsafe {
-                            #add_inner
-                        }
-                        #unsigned_ident_plus_one(x)
+                impl std::ops::Add<&#rhs_ident> for &#unsigned_ident {
+                    type Output = #out_ident;
+                    fn add(self, rhs: &#rhs_ident) -> Self::Output {
+                        let mut x = <#out_ident>::from(*self).0;
+                        let y = <#out_ident>::from(*rhs).0;
+                        x += y;
+                        #out_ident(x)
                     }
                 }
-                impl #unsigned_ident_plus_one {
-                    /// Growing subtraction. Compute `self - rhs` returning an output type
-                    /// guaranteed to be able to contain the result.
-                    /// 
-                    /// Since `unchecked_math` is nightly only, this uses inline assembly.
-                    pub fn growing_sub(self, rhs: #unsigned_ident) -> #unsigned_ident_plus_one {
-                        let mut x = <#unsigned_ident_plus_one>::from(self).0;
-                        let y = <#unsigned_ident_plus_one>::from(rhs).0;
-                        unsafe {
-                            #sub_inner
-                        }
-                        #unsigned_ident_plus_one(x)
+                impl std::ops::Add<&#rhs_ident> for #unsigned_ident {
+                    type Output = #out_ident;
+                    fn add(self, rhs: &#rhs_ident) -> Self::Output {
+                        let mut x = <#out_ident>::from(self).0;
+                        let y = <#out_ident>::from(*rhs).0;
+                        x += y;
+                        #out_ident(x)
+                    }
+                }
+                impl<'a> std::ops::Add<#rhs_ident> for &'a #unsigned_ident {
+                    type Output = #out_ident;
+                    fn add(self, rhs: #rhs_ident) -> Self::Output {
+                        let mut x = <#out_ident>::from(*self).0;
+                        let y = <#out_ident>::from(rhs).0;
+                        x += y;
+                        #out_ident(x)
+                    }
+                }
+                impl std::ops::Add<#rhs_ident> for #unsigned_ident {
+                    type Output = #out_ident;
+                    fn add(self, rhs: #rhs_ident) -> Self::Output {
+                        let mut x = <#out_ident>::from(self).0;
+                        let y = <#out_ident>::from(rhs).0;
+                        x += y;
+                        #out_ident(x)
                     }
                 }
             }
-        };
+        }).collect::<TokenStream>();
+
+        let unsigned_mul_ops = (1..max).filter(|rhs| rhs+size <= max).map(|rhs|{
+            let out_size = size+rhs;
+            let rhs_ident = format_ident!("u{rhs}");
+            let out_ident = format_ident!("u{out_size}");
+
+            quote! {
+                impl std::ops::Mul<&#rhs_ident> for &#unsigned_ident {
+                    type Output = #out_ident;
+                    fn mul(self, rhs: &#rhs_ident) -> Self::Output {
+                        let mut x = <#out_ident>::from(*self).0;
+                        let y = <#out_ident>::from(*rhs).0;
+                        let z = x*y;
+                        #out_ident(z)
+                    }
+                }
+                impl std::ops::Mul<&#rhs_ident> for #unsigned_ident {
+                    type Output = #out_ident;
+                    fn mul(self, rhs: &#rhs_ident) -> Self::Output {
+                        let mut x = <#out_ident>::from(self).0;
+                        let y = <#out_ident>::from(*rhs).0;
+                        let z = x*y;
+                        #out_ident(z)
+                    }
+                }
+                impl<'a> std::ops::Mul<#rhs_ident> for &'a #unsigned_ident {
+                    type Output = #out_ident;
+                    fn mul(self, rhs: #rhs_ident) -> Self::Output {
+                        let mut x = <#out_ident>::from(*self).0;
+                        let y = <#out_ident>::from(rhs).0;
+                        let z = x*y;
+                        #out_ident(z)
+                    }
+                }
+                impl std::ops::Mul<#rhs_ident> for #unsigned_ident {
+                    type Output = #out_ident;
+                    fn mul(self, rhs: #rhs_ident) -> Self::Output {
+                        let mut x = <#out_ident>::from(self).0;
+                        let y = <#out_ident>::from(rhs).0;
+                        let z = x*y;
+                        #out_ident(z)
+                    }
+                }
+            }
+        }).collect::<TokenStream>();
+
+        let unsigned_sub_ops = (1..max).filter(|rhs| std::cmp::max(rhs,&size) < &max).map(|s| {
+            let rhs_ident = format_ident!("u{s}");
+            let out_size = std::cmp::max(size,s)+1;
+            let out_ident = format_ident!("i{out_size}");
+
+            quote! {
+                impl std::ops::Sub<&#rhs_ident> for &#unsigned_ident {
+                    type Output = #out_ident;
+                    fn sub(self, rhs: &#rhs_ident) -> Self::Output {
+                        let mut x = <#out_ident>::from(*self).0;
+                        let y = <#out_ident>::from(*rhs).0;
+                        x -= y;
+                        #out_ident(x)
+                    }
+                }
+                impl std::ops::Sub<&#rhs_ident> for #unsigned_ident {
+                    type Output = #out_ident;
+                    fn sub(self, rhs: &#rhs_ident) -> Self::Output {
+                        let mut x = <#out_ident>::from(self).0;
+                        let y = <#out_ident>::from(*rhs).0;
+                        x -= y;
+                        #out_ident(x)
+                    }
+                }
+                impl<'a> std::ops::Sub<#rhs_ident> for &'a #unsigned_ident {
+                    type Output = #out_ident;
+                    fn sub(self, rhs: #rhs_ident) -> Self::Output {
+                        let mut x = <#out_ident>::from(*self).0;
+                        let y = <#out_ident>::from(rhs).0;
+                        x -= y;
+                        #out_ident(x)
+                    }
+                }
+                impl std::ops::Sub<#rhs_ident> for #unsigned_ident {
+                    type Output = #out_ident;
+                    fn sub(self, rhs: #rhs_ident) -> Self::Output {
+                        let mut x = <#out_ident>::from(self).0;
+                        let y = <#out_ident>::from(rhs).0;
+                        x -= y;
+                        #out_ident(x)
+                    }
+                }
+            }
+        }).collect::<TokenStream>();
+
+        let unsigned_rem_ops = (1..max).filter(|rhs|rhs < &max).map(|s|{
+            let rhs_ident = format_ident!("u{s}");
+            let out_size = std::cmp::min(size,s);
+            let out_ident = format_ident!("u{out_size}");
+            let max_ident = std::cmp::max(size,s);
+            let max_ident = format_ident!("u{max_ident}");
+            quote! {
+                impl std::ops::Rem<&#rhs_ident> for &#unsigned_ident {
+                    type Output = #out_ident;
+                    fn rem(self, rhs: &#rhs_ident) -> Self::Output {
+                        let x = <#max_ident>::from(*self).0;
+                        let y = <#max_ident>::from(*rhs).0;
+                        #out_ident::try_from(x % y).unwrap()
+                    }
+                }
+                impl std::ops::Rem<&#rhs_ident> for #unsigned_ident {
+                    type Output = #out_ident;
+                    fn rem(self, rhs: &#rhs_ident) -> Self::Output {
+                        let x = <#max_ident>::from(self).0;
+                        let y = <#max_ident>::from(*rhs).0;
+                        #out_ident::try_from(x % y).unwrap()
+                    }
+                }
+                impl<'a> std::ops::Rem<#rhs_ident> for &'a #unsigned_ident {
+                    type Output = #out_ident;
+                    fn rem(self, rhs: #rhs_ident) -> Self::Output {
+                        let x = <#max_ident>::from(*self).0;
+                        let y = <#max_ident>::from(rhs).0;
+                        #out_ident::try_from(x % y).unwrap()
+                    }
+                }
+                impl std::ops::Rem<#rhs_ident> for #unsigned_ident {
+                    type Output = #out_ident;
+                    fn rem(self, rhs: #rhs_ident) -> Self::Output {
+                        let x = <#max_ident>::from(self).0;
+                        let y = <#max_ident>::from(rhs).0;
+                        #out_ident::try_from(x % y).unwrap()
+                    }
+                }
+            }
+        }).collect::<TokenStream>();
 
         let signed_doc = format!(" The {size}-bit signed integer type.");
         let signed_inner_ident = format_ident!("i{inner_size}");
@@ -206,118 +291,215 @@ pub fn generate_types(item: proc_macro::TokenStream) -> proc_macro::TokenStream 
         let signed_min_doc = format!(" assert_eq!({signed_ident}::MIN, {signed_ident}::try_from({signed_min_ident}).unwrap());");
         let signed_bits_doc = format!(" assert_eq!({signed_ident}::BITS, {size});");
         let signed_wrapping_add_examples = format!(" assert_eq!({signed_ident}::MIN.wrapping_add({signed_ident}::try_from({signed_minus_one}).unwrap()), {signed_ident}::MAX);");
-        // TODO This is not correct, correct this.
-        let signed_abs_doc = format!(" The absolute value of `{signed_ident}::MIN` cannot be represented as an `{signed_ident}`, and attempting to calculate it will cause an overflow. This means that code in debug mode will trigger a panic on this case and optimized code will return `{signed_ident}::MIN` without a panic.");
-        let signed_abs_doc_example_one = format!(" assert_eq!({signed_ident}::MAX.abs(), {signed_ident}::MAX);");
-        let signed_abs_doc_example_two = if size == 1 {
-            String::from(" // `i1` cannot contain `1`.")
-        }else {
-            format!(" assert_eq!(({signed_ident}::MIN + {signed_ident}::try_from(1i8).unwrap()).abs(), {signed_ident}::MAX);")
-        };
-        let signed_growing_ops = if size == max {
-            quote! {}
-        }
-        else {
-            let signed_ident_plus_one = format_ident!("i{}",size + 1);
-            // On `x86` `reg` does not support 8-bit registers, instead this is `reg_byte`.
-            // See https://doc.rust-lang.org/reference/inline-assembly.html.
-            // ```text
-            // Architecture	Register    class	    Target feature	Allowed types
-            // x86-32	                reg	        None	        i16, i32, f32
-            // x86-64	                reg	        None	        i16, i32, f32, i64, f64
-            // x86	                    reg_byte	None	        i8
-            // ```
-            let (add_inner,sub_inner) = if cfg!(target_arch="x86_64") && size < 8 {
-                (
-                    quote! {
-                        std::arch::asm! {
-                            "add {x}, {y}",
-                            x = inout(reg_byte) x,
-                            y = in(reg_byte) y,
-                        }
-                    },
-                    quote! {
-                        std::arch::asm! {
-                            "sub {x}, {y}",
-                            x = inout(reg_byte) x,
-                            y = in(reg_byte) y,
-                        }
-                    }
-                )
-            }
-            // Registers do not support i128s & u128s.
-            else if size >= 64 {
-                (
-                    quote!{
-                        x += y;
-                    },
-                    quote!{
-                        x -= y;
-                    }
-                )
-            }
-            else {
-                (
-                    quote! {
-                        std::arch::asm! {
-                            "add {x}, {y}",
-                            x = inout(reg) x,
-                            y = in(reg) y,
-                        }
-                    },
-                    quote! {
-                        std::arch::asm! {
-                            "sub {x}, {y}",
-                            x = inout(reg) x,
-                            y = in(reg) y,
-                        }
-                    }
-                )
-            };
-            quote! {
-                /// Growing addition. Compute `self + rhs` returning an output type guaranteed to be
-                /// able to contain the result.
-                /// 
-                /// Since `unchecked_math` is nightly only, this uses inline assembly.
-                pub fn growing_add(self, rhs: #signed_ident) -> #signed_ident_plus_one {
-                    let mut x = <#signed_ident_plus_one>::from(self).0;
-                    let y = <#signed_ident_plus_one>::from(rhs).0;
-                    unsafe {
-                        #add_inner
-                    }
-                    #signed_ident_plus_one(x)
-                }
 
-                /// Growing subtraction. Compute `self - rhs` returning an output type guaranteed to
-                /// be able to contain the result.
-                /// 
-                /// Since `unchecked_math` is nightly only, this uses inline assembly.
-                pub fn growing_sub(self, rhs: #signed_ident) -> #signed_ident_plus_one {
-                    let mut x = <#signed_ident_plus_one>::from(self).0;
-                    let y = <#signed_ident_plus_one>::from(rhs).0;
-                    unsafe {
-                        #sub_inner
+        let signed_add_ops = (1..max).filter(|rhs| std::cmp::max(rhs,&size) < &max).map(|s| {
+            let signed_rhs = format_ident!("i{s}");
+            let output_size = std::cmp::max(size,s) + 1;
+            let signed_ident_plus_one = format_ident!("i{output_size}");
+
+            quote! {
+                impl std::ops::Add<&#signed_rhs> for &#signed_ident {
+                    type Output = #signed_ident_plus_one;
+                    fn add(self, rhs: &#signed_rhs) -> Self::Output {
+                        let mut x = <#signed_ident_plus_one>::from(*self).0;
+                        let y = <#signed_ident_plus_one>::from(*rhs).0;
+                        x += y;
+                        #signed_ident_plus_one(x)
                     }
-                    #signed_ident_plus_one(x)
+                }
+                impl std::ops::Add<&#signed_rhs> for #signed_ident {
+                    type Output = #signed_ident_plus_one;
+                    fn add(self, rhs: &#signed_rhs) -> Self::Output {
+                        let mut x = <#signed_ident_plus_one>::from(self).0;
+                        let y = <#signed_ident_plus_one>::from(*rhs).0;
+                        x += y;
+                        #signed_ident_plus_one(x)
+                    }
+                }
+                impl<'a> std::ops::Add<#signed_rhs> for &'a #signed_ident {
+                    type Output = #signed_ident_plus_one;
+                    fn add(self, rhs: #signed_rhs) -> Self::Output {
+                        let mut x = <#signed_ident_plus_one>::from(*self).0;
+                        let y = <#signed_ident_plus_one>::from(rhs).0;
+                        x += y;
+                        #signed_ident_plus_one(x)
+                    }
+                }
+                impl std::ops::Add<#signed_rhs> for #signed_ident {
+                    type Output = #signed_ident_plus_one;
+                    fn add(self, rhs: #signed_rhs) -> Self::Output {
+                        let mut x = <#signed_ident_plus_one>::from(self).0;
+                        let y = <#signed_ident_plus_one>::from(rhs).0;
+                        x += y;
+                        #signed_ident_plus_one(x)
+                    }
                 }
             }
-        };
+        }).collect::<TokenStream>();
+
+        let signed_mul_ops = (1..max).filter(|rhs| rhs+size <= max).map(|rhs|{
+            let out = size+rhs;
+            let rhs_ident = format_ident!("i{rhs}");
+            let out_ident = format_ident!("i{out}");
+
+            quote! {
+                impl std::ops::Mul<&#rhs_ident> for &#signed_ident {
+                    type Output = #out_ident;
+                    fn mul(self, rhs: &#rhs_ident) -> Self::Output {
+                        let mut x = <#out_ident>::from(*self).0;
+                        let y = <#out_ident>::from(*rhs).0;
+                        let z = x*y;
+                        #out_ident(z)
+                    }
+                }
+                impl std::ops::Mul<&#rhs_ident> for #signed_ident {
+                    type Output = #out_ident;
+                    fn mul(self, rhs: &#rhs_ident) -> Self::Output {
+                        let mut x = <#out_ident>::from(self).0;
+                        let y = <#out_ident>::from(*rhs).0;
+                        let z = x*y;
+                        #out_ident(z)
+                    }
+                }
+                impl<'a> std::ops::Mul<#rhs_ident> for &'a #signed_ident {
+                    type Output = #out_ident;
+                    fn mul(self, rhs: #rhs_ident) -> Self::Output {
+                        let mut x = <#out_ident>::from(*self).0;
+                        let y = <#out_ident>::from(rhs).0;
+                        let z = x*y;
+                        #out_ident(z)
+                    }
+                }
+                impl std::ops::Mul<#rhs_ident> for #signed_ident {
+                    type Output = #out_ident;
+                    fn mul(self, rhs: #rhs_ident) -> Self::Output {
+                        let mut x = <#out_ident>::from(self).0;
+                        let y = <#out_ident>::from(rhs).0;
+                        let z = x*y;
+                        #out_ident(z)
+                    }
+                }
+            }
+        }).collect::<TokenStream>();
+
+        let signed_sub_ops = (1..max).filter(|rhs| std::cmp::max(rhs,&size) < &max).map(|s| {
+            let signed_rhs = format_ident!("i{s}");
+            let output_size = std::cmp::max(size,s) + 1;
+            let signed_ident_plus_one = format_ident!("i{output_size}");
+
+            quote! {
+                impl std::ops::Sub<&#signed_rhs> for &#signed_ident {
+                    type Output = #signed_ident_plus_one;
+                    fn sub(self, rhs: &#signed_rhs) -> Self::Output {
+                        let mut x = <#signed_ident_plus_one>::from(*self).0;
+                        let y = <#signed_ident_plus_one>::from(*rhs).0;
+                        x -= y;
+                        #signed_ident_plus_one(x)
+                    }
+                }
+                impl std::ops::Sub<&#signed_rhs> for #signed_ident {
+                    type Output = #signed_ident_plus_one;
+                    fn sub(self, rhs: &#signed_rhs) -> Self::Output {
+                        let mut x = <#signed_ident_plus_one>::from(self).0;
+                        let y = <#signed_ident_plus_one>::from(*rhs).0;
+                        x -= y;
+                        #signed_ident_plus_one(x)
+                    }
+                }
+                impl<'a> std::ops::Sub<#signed_rhs> for &'a #signed_ident {
+                    type Output = #signed_ident_plus_one;
+                    fn sub(self, rhs: #signed_rhs) -> Self::Output {
+                        let mut x = <#signed_ident_plus_one>::from(*self).0;
+                        let y = <#signed_ident_plus_one>::from(rhs).0;
+                        x -= y;
+                        #signed_ident_plus_one(x)
+                    }
+                }
+                impl std::ops::Sub<#signed_rhs> for #signed_ident {
+                    type Output = #signed_ident_plus_one;
+                    fn sub(self, rhs: #signed_rhs) -> Self::Output {
+                        let mut x = <#signed_ident_plus_one>::from(self).0;
+                        let y = <#signed_ident_plus_one>::from(rhs).0;
+                        x -= y;
+                        #signed_ident_plus_one(x)
+                    }
+                }
+            }
+        }).collect::<TokenStream>();
+
+        let signed_rem_ops = (1..max).filter(|rhs|rhs < &max).map(|s|{
+            let rhs_ident = format_ident!("i{s}");
+            let out_size = std::cmp::min(size,s);
+            let out_ident = format_ident!("i{out_size}");
+            let max_ident = std::cmp::max(size,s);
+            let max_ident = format_ident!("i{max_ident}");
+            quote! {
+                impl std::ops::Rem<&#rhs_ident> for &#signed_ident {
+                    type Output = #out_ident;
+                    fn rem(self, rhs: &#rhs_ident) -> Self::Output {
+                        let x = <#max_ident>::from(*self).0;
+                        let y = <#max_ident>::from(*rhs).0;
+                        #out_ident::try_from(x % y).unwrap()
+                    }
+                }
+                impl std::ops::Rem<&#rhs_ident> for #signed_ident {
+                    type Output = #out_ident;
+                    fn rem(self, rhs: &#rhs_ident) -> Self::Output {
+                        let x = <#max_ident>::from(self).0;
+                        let y = <#max_ident>::from(*rhs).0;
+                        #out_ident::try_from(x % y).unwrap()
+                    }
+                }
+                impl<'a> std::ops::Rem<#rhs_ident> for &'a #signed_ident {
+                    type Output = #out_ident;
+                    fn rem(self, rhs: #rhs_ident) -> Self::Output {
+                        let x = <#max_ident>::from(*self).0;
+                        let y = <#max_ident>::from(rhs).0;
+                        #out_ident::try_from(x % y).unwrap()
+                    }
+                }
+                impl std::ops::Rem<#rhs_ident> for #signed_ident {
+                    type Output = #out_ident;
+                    fn rem(self, rhs: #rhs_ident) -> Self::Output {
+                        let x = <#max_ident>::from(self).0;
+                        let y = <#max_ident>::from(rhs).0;
+                        #out_ident::try_from(x % y).unwrap()
+                    }
+                }
+            }
+        }).collect::<TokenStream>();
 
         let unsigned_from_implementations = {
             let primitive_from = [8,16,32,64,128].into_iter().map(|s| {
                 let from_ident = format_ident!("u{s}");
                 let from_ident = quote! { core::primitive::#from_ident };
-                if size >= s {
-                    quote! {
+                match size.cmp(&s) {
+                    std::cmp::Ordering::Equal => quote!{
                         impl From<#from_ident> for #unsigned_ident {
                             fn from(x: #from_ident) -> Self {
                                 Self(<#unsigned_inner_ident>::from(x))
                             }
                         }
-                    }
-                }
-                else {
-                    quote! {
+                        impl From<#unsigned_ident> for #from_ident {
+                            fn from(x: #unsigned_ident) -> Self {
+                                <#from_ident>::from(x.0)
+                            }
+                        }
+                    },
+                    std::cmp::Ordering::Greater => quote! {
+                        impl From<#from_ident> for #unsigned_ident {
+                            fn from(x: #from_ident) -> Self {
+                                Self(<#unsigned_inner_ident>::from(x))
+                            }
+                        }
+                        impl TryFrom<#unsigned_ident> for #from_ident {
+                            type Error = TryFromIntError;
+                            fn try_from(x: #unsigned_ident) -> Result<Self,Self::Error> {
+                                <#from_ident>::try_from(x.0).map_err(|_|TryFromIntError)
+                            }
+                        }
+                    },
+                    std::cmp::Ordering::Less => quote! {
                         impl TryFrom<#from_ident> for #unsigned_ident {
                             type Error = TryFromIntError;
                             fn try_from(x: #from_ident) -> Result<Self, Self::Error> {
@@ -328,6 +510,11 @@ pub fn generate_types(item: proc_macro::TokenStream) -> proc_macro::TokenStream 
                                 else {
                                     Err(TryFromIntError)
                                 }
+                            }
+                        }
+                        impl From<#unsigned_ident> for #from_ident {
+                            fn from(x: #unsigned_ident) -> Self {
+                                <#from_ident>::from(x.0)
                             }
                         }
                     }
@@ -397,17 +584,33 @@ pub fn generate_types(item: proc_macro::TokenStream) -> proc_macro::TokenStream 
             let primitive_from = [8,16,32,64,128].into_iter().map(|s| {
                 let from_ident = format_ident!("i{s}");
                 let from_ident = quote! { core::primitive::#from_ident };
-                if size >= s {
-                    quote! {
+                match size.cmp(&s) {
+                    std::cmp::Ordering::Equal => quote!{
                         impl From<#from_ident> for #signed_ident {
                             fn from(x: #from_ident) -> Self {
                                 Self(<#signed_inner_ident>::from(x))
                             }
                         }
-                    }
-                }
-                else {
-                    quote! {
+                        impl From<#signed_ident> for #from_ident {
+                            fn from(x: #signed_ident) -> Self {
+                                <#from_ident>::from(x.0)
+                            }
+                        }
+                    },
+                    std::cmp::Ordering::Greater => quote! {
+                        impl From<#from_ident> for #signed_ident {
+                            fn from(x: #from_ident) -> Self {
+                                Self(<#signed_inner_ident>::from(x))
+                            }
+                        }
+                        impl TryFrom<#signed_ident> for #from_ident {
+                            type Error = TryFromIntError;
+                            fn try_from(x: #signed_ident) -> Result<Self,Self::Error> {
+                                <#from_ident>::try_from(x.0).map_err(|_|TryFromIntError)
+                            }
+                        }
+                    },
+                    std::cmp::Ordering::Less => quote! {
                         impl TryFrom<#from_ident> for #signed_ident {
                             type Error = TryFromIntError;
                             fn try_from(x: #from_ident) -> Result<Self, Self::Error> {
@@ -418,6 +621,11 @@ pub fn generate_types(item: proc_macro::TokenStream) -> proc_macro::TokenStream 
                                 else {
                                     Err(TryFromIntError)
                                 }
+                            }
+                        }
+                        impl From<#signed_ident> for #from_ident {
+                            fn from(x: #signed_ident) -> Self {
+                                <#from_ident>::from(x.0)
                             }
                         }
                     }
@@ -493,9 +701,25 @@ pub fn generate_types(item: proc_macro::TokenStream) -> proc_macro::TokenStream 
             _ => quote! { (#signed_one << #size) }
         };
 
+        let signed_abs = if let Some(minus @ 1..) = size.checked_sub(1) {
+            let ident = format_ident!("u{minus}");
+            let inner_size = std::cmp::max(minus.next_power_of_two(),8);
+            let inner_ident = format_ident!("u{inner_size}");
+            let inner_ident = quote! { core::primitive::#inner_ident };
+            quote! {
+                /// Computes the absolute value of self.
+                pub const fn abs(self) -> #ident {
+                    #ident(self.0.abs() as #inner_ident)
+                }
+            }
+        } else {
+            TokenStream::new()
+        };
+
         quote! {
             #[doc=#unsigned_doc]
             #[cfg_attr(feature="serde", derive(serde::Serialize, serde::Deserialize))]
+            #[repr(transparent)]
             #[derive(Debug, Eq, PartialEq, Ord, PartialOrd, Clone, Copy, Hash)]
             pub struct #unsigned_ident(#unsigned_inner_ident);
             impl #unsigned_ident {
@@ -671,106 +895,10 @@ pub fn generate_types(item: proc_macro::TokenStream) -> proc_macro::TokenStream 
                 }
             }
 
-            #unsigned_growing_add
-
-            impl std::ops::Add<&#unsigned_ident> for &#unsigned_ident {
-                type Output = #unsigned_ident;
-                fn add(self, rhs: &#unsigned_ident) -> Self::Output {
-                    let x = self.0 + rhs.0;
-                    debug_assert!((#unsigned_ident::MIN.0..#unsigned_ident::MAX.0).contains(&x));
-                    #unsigned_ident(x)
-                }
-            }
-            impl std::ops::Add<&#unsigned_ident> for #unsigned_ident {
-                type Output = #unsigned_ident;
-                fn add(self, rhs: &#unsigned_ident) -> Self::Output {
-                    let x = self.0 + rhs.0;
-                    debug_assert!((#unsigned_ident::MIN.0..#unsigned_ident::MAX.0).contains(&x));
-                    #unsigned_ident(x)
-                }
-            }
-            impl<'a> std::ops::Add<#unsigned_ident> for &'a #unsigned_ident {
-                type Output = #unsigned_ident;
-                fn add(self, rhs: #unsigned_ident) -> Self::Output {
-                    let x = self.0 + rhs.0;
-                    debug_assert!((#unsigned_ident::MIN.0..#unsigned_ident::MAX.0).contains(&x));
-                    #unsigned_ident(x)
-                }
-            }
-            impl std::ops::Add<#unsigned_ident> for #unsigned_ident {
-                type Output = #unsigned_ident;
-                fn add(self, rhs: #unsigned_ident) -> Self::Output {
-                    let x = self.0 + rhs.0;
-                    debug_assert!((#unsigned_ident::MIN.0..#unsigned_ident::MAX.0).contains(&x));
-                    #unsigned_ident(x)
-                }
-            }
-
-            impl std::ops::Sub<&#unsigned_ident> for &#unsigned_ident {
-                type Output = #unsigned_ident;
-                fn sub(self, rhs: &#unsigned_ident) -> Self::Output {
-                    let x = self.0 - rhs.0;
-                    debug_assert!((#unsigned_ident::MIN.0..#unsigned_ident::MAX.0).contains(&x));
-                    #unsigned_ident(x)
-                }
-            }
-            impl std::ops::Sub<&#unsigned_ident> for #unsigned_ident {
-                type Output = #unsigned_ident;
-                fn sub(self, rhs: &#unsigned_ident) -> Self::Output {
-                    let x = self.0 - rhs.0;
-                    debug_assert!((#unsigned_ident::MIN.0..#unsigned_ident::MAX.0).contains(&x));
-                    #unsigned_ident(x)
-                }
-            }
-            impl<'a> std::ops::Sub<#unsigned_ident> for &'a #unsigned_ident {
-                type Output = #unsigned_ident;
-                fn sub(self, rhs: #unsigned_ident) -> Self::Output {
-                    let x = self.0 - rhs.0;
-                    debug_assert!((#unsigned_ident::MIN.0..#unsigned_ident::MAX.0).contains(&x));
-                    #unsigned_ident(x)
-                }
-            }
-            impl std::ops::Sub<#unsigned_ident> for #unsigned_ident {
-                type Output = #unsigned_ident;
-                fn sub(self, rhs: #unsigned_ident) -> Self::Output {
-                    let x = self.0 - rhs.0;
-                    debug_assert!((#unsigned_ident::MIN.0..#unsigned_ident::MAX.0).contains(&x));
-                    #unsigned_ident(x)
-                }
-            }
-
-            impl std::ops::Mul<&#unsigned_ident> for &#unsigned_ident {
-                type Output = #unsigned_ident;
-                fn mul(self, rhs: &#unsigned_ident) -> Self::Output {
-                    let x = self.0 * rhs.0;
-                    debug_assert!((#unsigned_ident::MIN.0..#unsigned_ident::MAX.0).contains(&x));
-                    #unsigned_ident(x)
-                }
-            }
-            impl std::ops::Mul<&#unsigned_ident> for #unsigned_ident {
-                type Output = #unsigned_ident;
-                fn mul(self, rhs: &#unsigned_ident) -> Self::Output {
-                    let x = self.0 * rhs.0;
-                    debug_assert!((#unsigned_ident::MIN.0..#unsigned_ident::MAX.0).contains(&x));
-                    #unsigned_ident(x)
-                }
-            }
-            impl<'a> std::ops::Mul<#unsigned_ident> for &'a #unsigned_ident {
-                type Output = #unsigned_ident;
-                fn mul(self, rhs: #unsigned_ident) -> Self::Output {
-                    let x = self.0 * rhs.0;
-                    debug_assert!((#unsigned_ident::MIN.0..#unsigned_ident::MAX.0).contains(&x));
-                    #unsigned_ident(x)
-                }
-            }
-            impl std::ops::Mul<#unsigned_ident> for #unsigned_ident {
-                type Output = #unsigned_ident;
-                fn mul(self, rhs: #unsigned_ident) -> Self::Output {
-                    let x = self.0 * rhs.0;
-                    debug_assert!((#unsigned_ident::MIN.0..#unsigned_ident::MAX.0).contains(&x));
-                    #unsigned_ident(x)
-                }
-            }
+            #unsigned_add_ops
+            #unsigned_mul_ops
+            #unsigned_sub_ops
+            #unsigned_rem_ops
 
             impl std::ops::Div<&#unsigned_ident> for &#unsigned_ident {
                 type Output = #unsigned_ident;
@@ -805,39 +933,11 @@ pub fn generate_types(item: proc_macro::TokenStream) -> proc_macro::TokenStream 
                 }
             }
 
-            impl std::ops::Rem<&#unsigned_ident> for &#unsigned_ident {
-                type Output = #unsigned_ident;
-                fn rem(self, rhs: &#unsigned_ident) -> Self::Output {
-                    let x = self.0 % rhs.0;
-                    debug_assert!((#unsigned_ident::MIN.0..#unsigned_ident::MAX.0).contains(&x));
-                    #unsigned_ident(x)
+            impl std::fmt::Display for #unsigned_ident {
+                fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                    write!(f,"{}",self.0)
                 }
             }
-            impl std::ops::Rem<&#unsigned_ident> for #unsigned_ident {
-                type Output = #unsigned_ident;
-                fn rem(self, rhs: &#unsigned_ident) -> Self::Output {
-                    let x = self.0 / rhs.0;
-                    debug_assert!((#unsigned_ident::MIN.0..#unsigned_ident::MAX.0).contains(&x));
-                    #unsigned_ident(x)
-                }
-            }
-            impl<'a> std::ops::Rem<#unsigned_ident> for &'a #unsigned_ident {
-                type Output = #unsigned_ident;
-                fn rem(self, rhs: #unsigned_ident) -> Self::Output {
-                    let x = self.0 % rhs.0;
-                    debug_assert!((#unsigned_ident::MIN.0..#unsigned_ident::MAX.0).contains(&x));
-                    #unsigned_ident(x)
-                }
-            }
-            impl std::ops::Rem<#unsigned_ident> for #unsigned_ident {
-                type Output = #unsigned_ident;
-                fn rem(self, rhs: #unsigned_ident) -> Self::Output {
-                    let x = self.0 % rhs.0;
-                    debug_assert!((#unsigned_ident::MIN.0..#unsigned_ident::MAX.0).contains(&x));
-                    #unsigned_ident(x)
-                }
-            }
-
             impl std::fmt::Binary for #unsigned_ident {
                 fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
                     std::fmt::Binary::fmt(&self.0, f)
@@ -963,37 +1063,9 @@ pub fn generate_types(item: proc_macro::TokenStream) -> proc_macro::TokenStream 
 
             #unsigned_from_implementations
 
-            #[cfg(feature="num-traits")]
-            impl num_traits::identities::One for #unsigned_ident {
-                fn one() -> Self {
-                    use num_traits::identities::One;
-                    Self(#unsigned_inner_ident::one())
-                }
-            }
-            #[cfg(feature="num-traits")]
-            impl num_traits::identities::Zero for #unsigned_ident {
-                fn zero() -> Self {
-                    use num_traits::identities::Zero;
-                    Self(#unsigned_inner_ident::zero())
-                }
-                fn is_zero(&self) -> bool {
-                    *self == Self::zero()
-                }
-            }
-            #[cfg(feature="num-traits")]
-            impl num_traits::Num for #unsigned_ident {
-                type FromStrRadixErr = ParseIntError;
-
-                fn from_str_radix(
-                    str: &str,
-                    radix: core::primitive::u32,
-                ) -> Result<Self, Self::FromStrRadixErr> {
-                    Self::from_str_radix(str,radix)
-                }
-            }
-
             #[doc=#signed_doc]
             #[cfg_attr(feature="serde", derive(serde::Serialize, serde::Deserialize))]
+            #[repr(transparent)]
             #[derive(Debug, Eq, PartialEq, Ord, PartialOrd, Clone, Copy, Hash)]
             pub struct #signed_ident(#signed_inner_ident);
             impl #signed_ident {
@@ -1036,23 +1108,8 @@ pub fn generate_types(item: proc_macro::TokenStream) -> proc_macro::TokenStream 
                 #[doc=#signed_bits_doc]
                 /// ```
                 pub const BITS: core::primitive::u32 = #bits;
-                /// Computes the absolute value of self.
-                /// 
-                /// # Overflow behavior
-                /// 
-                #[doc=#signed_abs_doc]
-                ///
-                /// # Examples
-                /// 
-                /// Basic usage:
-                /// ```
-                /// # use ux2::*;
-                #[doc=#signed_abs_doc_example_one]
-                #[doc=#signed_abs_doc_example_two]
-                /// ```
-                pub const fn abs(self) -> #signed_ident {
-                    Self(self.0.abs())
-                }
+
+                #signed_abs
 
                 /// Create a native endian integer value from its representation as a byte
                 /// array in big endian.
@@ -1197,108 +1254,12 @@ pub fn generate_types(item: proc_macro::TokenStream) -> proc_macro::TokenStream 
                 pub fn wrapping_sub(self, rhs: #signed_ident) -> #signed_ident {
                     Self(self.0.overflowing_sub(rhs.0).0).mask()
                 }
-
-                #signed_growing_ops
             }
 
-            impl std::ops::Add<&#signed_ident> for &#signed_ident {
-                type Output = #signed_ident;
-                fn add(self, rhs: &#signed_ident) -> Self::Output {
-                    let x = self.0 + rhs.0;
-                    debug_assert!((#signed_ident::MIN.0..#signed_ident::MAX.0).contains(&x));
-                    #signed_ident(x)
-                }
-            }
-            impl std::ops::Add<&#signed_ident> for #signed_ident {
-                type Output = #signed_ident;
-                fn add(self, rhs: &#signed_ident) -> Self::Output {
-                    let x = self.0 + rhs.0;
-                    debug_assert!((#signed_ident::MIN.0..#signed_ident::MAX.0).contains(&x));
-                    #signed_ident(x)
-                }
-            }
-            impl<'a> std::ops::Add<#signed_ident> for &'a #signed_ident {
-                type Output = #signed_ident;
-                fn add(self, rhs: #signed_ident) -> Self::Output {
-                    let x = self.0 + rhs.0;
-                    debug_assert!((#signed_ident::MIN.0..#signed_ident::MAX.0).contains(&x));
-                    #signed_ident(x)
-                }
-            }
-            impl std::ops::Add<#signed_ident> for #signed_ident {
-                type Output = #signed_ident;
-                fn add(self, rhs: #signed_ident) -> Self::Output {
-                    let x = self.0 + rhs.0;
-                    debug_assert!((#signed_ident::MIN.0..#signed_ident::MAX.0).contains(&x));
-                    #signed_ident(x)
-                }
-            }
-
-            impl std::ops::Sub<&#signed_ident> for &#signed_ident {
-                type Output = #signed_ident;
-                fn sub(self, rhs: &#signed_ident) -> Self::Output {
-                    let x = self.0 - rhs.0;
-                    debug_assert!((#signed_ident::MIN.0..#signed_ident::MAX.0).contains(&x));
-                    #signed_ident(x)
-                }
-            }
-            impl std::ops::Sub<&#signed_ident> for #signed_ident {
-                type Output = #signed_ident;
-                fn sub(self, rhs: &#signed_ident) -> Self::Output {
-                    let x = self.0 - rhs.0;
-                    debug_assert!((#signed_ident::MIN.0..#signed_ident::MAX.0).contains(&x));
-                    #signed_ident(x)
-                }
-            }
-            impl<'a> std::ops::Sub<#signed_ident> for &'a #signed_ident {
-                type Output = #signed_ident;
-                fn sub(self, rhs: #signed_ident) -> Self::Output {
-                    let x = self.0 - rhs.0;
-                    debug_assert!((#signed_ident::MIN.0..#signed_ident::MAX.0).contains(&x));
-                    #signed_ident(x)
-                }
-            }
-            impl std::ops::Sub<#signed_ident> for #signed_ident {
-                type Output = #signed_ident;
-                fn sub(self, rhs: #signed_ident) -> Self::Output {
-                    let x = self.0 - rhs.0;
-                    debug_assert!((#signed_ident::MIN.0..#signed_ident::MAX.0).contains(&x));
-                    #signed_ident(x)
-                }
-            }
-
-            impl std::ops::Mul<&#signed_ident> for &#signed_ident {
-                type Output = #signed_ident;
-                fn mul(self, rhs: &#signed_ident) -> Self::Output {
-                    let x = self.0 * rhs.0;
-                    debug_assert!((#signed_ident::MIN.0..#signed_ident::MAX.0).contains(&x));
-                    #signed_ident(x)
-                }
-            }
-            impl std::ops::Mul<&#signed_ident> for #signed_ident {
-                type Output = #signed_ident;
-                fn mul(self, rhs: &#signed_ident) -> Self::Output {
-                    let x = self.0 * rhs.0;
-                    debug_assert!((#signed_ident::MIN.0..#signed_ident::MAX.0).contains(&x));
-                    #signed_ident(x)
-                }
-            }
-            impl<'a> std::ops::Mul<#signed_ident> for &'a #signed_ident {
-                type Output = #signed_ident;
-                fn mul(self, rhs: #signed_ident) -> Self::Output {
-                    let x = self.0 * rhs.0;
-                    debug_assert!((#signed_ident::MIN.0..#signed_ident::MAX.0).contains(&x));
-                    #signed_ident(x)
-                }
-            }
-            impl std::ops::Mul<#signed_ident> for #signed_ident {
-                type Output = #signed_ident;
-                fn mul(self, rhs: #signed_ident) -> Self::Output {
-                    let x = self.0 * rhs.0;
-                    debug_assert!((#signed_ident::MIN.0..#signed_ident::MAX.0).contains(&x));
-                    #signed_ident(x)
-                }
-            }
+            #signed_add_ops
+            #signed_mul_ops
+            #signed_sub_ops
+            #signed_rem_ops
 
             impl std::ops::Div<&#signed_ident> for &#signed_ident {
                 type Output = #signed_ident;
@@ -1333,39 +1294,11 @@ pub fn generate_types(item: proc_macro::TokenStream) -> proc_macro::TokenStream 
                 }
             }
 
-            impl std::ops::Rem<&#signed_ident> for &#signed_ident {
-                type Output = #signed_ident;
-                fn rem(self, rhs: &#signed_ident) -> Self::Output {
-                    let x = self.0 % rhs.0;
-                    debug_assert!((#signed_ident::MIN.0..#signed_ident::MAX.0).contains(&x));
-                    #signed_ident(x)
+            impl std::fmt::Display for #signed_ident {
+                fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                    write!(f,"{}",self.0)
                 }
             }
-            impl std::ops::Rem<&#signed_ident> for #signed_ident {
-                type Output = #signed_ident;
-                fn rem(self, rhs: &#signed_ident) -> Self::Output {
-                    let x = self.0 % rhs.0;
-                    debug_assert!((#signed_ident::MIN.0..#signed_ident::MAX.0).contains(&x));
-                    #signed_ident(x)
-                }
-            }
-            impl<'a> std::ops::Rem<#signed_ident> for &'a #signed_ident {
-                type Output = #signed_ident;
-                fn rem(self, rhs: #signed_ident) -> Self::Output {
-                    let x = self.0 % rhs.0;
-                    debug_assert!((#signed_ident::MIN.0..#signed_ident::MAX.0).contains(&x));
-                    #signed_ident(x)
-                }
-            }
-            impl std::ops::Rem<#signed_ident> for #signed_ident {
-                type Output = #signed_ident;
-                fn rem(self, rhs: #signed_ident) -> Self::Output {
-                    let x = self.0 % rhs.0;
-                    debug_assert!((#signed_ident::MIN.0..#signed_ident::MAX.0).contains(&x));
-                    #signed_ident(x)
-                }
-            }
-
             impl std::fmt::Binary for #signed_ident {
                 fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
                     std::fmt::Binary::fmt(&self.0, f)
@@ -1499,34 +1432,6 @@ pub fn generate_types(item: proc_macro::TokenStream) -> proc_macro::TokenStream 
 
             #signed_from_implementations
 
-            #[cfg(feature="num-traits")]
-            impl num_traits::identities::One for #signed_ident {
-                fn one() -> Self {
-                    use num_traits::identities::One;
-                    Self(#signed_inner_ident::one())
-                }
-            }
-            #[cfg(feature="num-traits")]
-            impl num_traits::identities::Zero for #signed_ident {
-                fn zero() -> Self {
-                    use num_traits::identities::Zero;
-                    Self(#signed_inner_ident::zero())
-                }
-                fn is_zero(&self) -> bool {
-                    *self == Self::zero()
-                }
-            }
-            #[cfg(feature="num-traits")]
-            impl num_traits::Num for #signed_ident {
-                type FromStrRadixErr = ParseIntError;
-
-                fn from_str_radix(
-                    str: &str,
-                    radix: core::primitive::u32,
-                ) -> Result<Self, Self::FromStrRadixErr> {
-                    Self::from_str_radix(str,radix)
-                }
-            }
         }
     }).collect::<proc_macro2::TokenStream>();
 
