@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.8.0](https://github.com/JonathanWoollett-Light/ux2/compare/ux2-v0.7.0...ux2-v0.8.0) (2023-07-02)
+
+
+### Features
+
+* Compile-time arithmetic ([59669ca](https://github.com/JonathanWoollett-Light/ux2/commit/59669ca492904263c738aa47bbc51ad58142b67d))
+* Update ux2-macro version ([1ec6819](https://github.com/JonathanWoollett-Light/ux2/commit/1ec6819226d56106670d3dd5220ab90c6d55c79b))
+
 ## [0.7.0](https://github.com/JonathanWoollett-Light/ux2/compare/ux2-v0.6.0...ux2-v0.7.0) (2023-06-29)
 
 
