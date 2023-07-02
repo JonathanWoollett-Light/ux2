@@ -20,7 +20,7 @@ default = ["32"]
 8 = []
 
 [dependencies]
-ux2-macros =  { path ="../ux2-macros", version = "0.7.0" }
+ux2-macros =  { path ="../ux2-macros", version = "0.8.0" }
 serde = { version = "1.0.160", features = ["derive"], optional = true }
 
 [dev-dependencies]
