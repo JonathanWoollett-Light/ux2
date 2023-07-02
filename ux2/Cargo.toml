@@ -12,7 +12,7 @@ readme = "../README.md"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [features]
-default = ["32"]
+default = ["16"]
 128 = ["64"]
 64 = ["32"]
 32 = ["16"]
