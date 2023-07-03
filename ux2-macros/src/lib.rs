@@ -478,18 +478,35 @@ pub fn generate_types(item: proc_macro::TokenStream) -> proc_macro::TokenStream 
 
         let unsigned_from_implementations = {
             let pointer_width_from = std::iter::once(match size.cmp(&TARGET_POINTER_WIDTH) {
-                std::cmp::Ordering::Greater | std::cmp::Ordering::Equal => quote! {
+                std::cmp::Ordering::Greater => quote! {
                     impl From<usize> for #unsigned_ident {
                         fn from(x: usize) -> Self {
                             Self(x as #unsigned_inner_ident)
                         }
                     }
-                    
+                    impl TryFrom<#unsigned_ident> for usize {
+                        type Error = TryFromIntError;
+                        fn try_from(x: #unsigned_ident) -> Result<Self, Self::Error> {
+                            usize::try_from(x.0).map_err(|_|TryFromIntError)
+                        }
+                    }
+                },
+                std::cmp::Ordering::Equal => quote! {
+                    impl From<usize> for #unsigned_ident {
+                        fn from(x: usize) -> Self {
+                            Self(x as #unsigned_inner_ident)
+                        }
+                    }
+                    impl From<#unsigned_ident> for usize {
+                        fn from(x: #unsigned_ident) -> Self {
+                            x.0 as usize
+                        }
+                    }
                 },
                 std::cmp::Ordering::Less => quote! {
                     impl TryFrom<usize> for #unsigned_ident {
                         type Error = TryFromIntError;
-                        fn try_from(x: usize) -> Result<Self,Self::Error> {
+                        fn try_from(x: usize) -> Result<Self, Self::Error> {
                             let y = <#unsigned_inner_ident>::try_from(x).map_err(|_|TryFromIntError)?;
                             if (Self::MIN.0..=Self::MAX.0).contains(&y) {
                                 Ok(Self(y))
@@ -497,6 +514,11 @@ pub fn generate_types(item: proc_macro::TokenStream) -> proc_macro::TokenStream 
                             else {
                                 Err(TryFromIntError)
                             }
+                        }
+                    }
+                    impl From<#unsigned_ident> for usize {
+                        fn from(x: #unsigned_ident) -> Self {
+                            x.0 as usize
                         }
                     }
                 }
@@ -526,7 +548,7 @@ pub fn generate_types(item: proc_macro::TokenStream) -> proc_macro::TokenStream 
                         }
                         impl TryFrom<#unsigned_ident> for #from_ident {
                             type Error = TryFromIntError;
-                            fn try_from(x: #unsigned_ident) -> Result<Self,Self::Error> {
+                            fn try_from(x: #unsigned_ident) -> Result<Self, Self::Error> {
                                 <#from_ident>::try_from(x.0).map_err(|_|TryFromIntError)
                             }
                         }
@@ -614,13 +636,30 @@ pub fn generate_types(item: proc_macro::TokenStream) -> proc_macro::TokenStream 
         };
         let signed_from_implementations = {
             let pointer_width_from = std::iter::once(match size.cmp(&TARGET_POINTER_WIDTH) {
-                std::cmp::Ordering::Greater | std::cmp::Ordering::Equal => quote! {
+                std::cmp::Ordering::Greater => quote! {
                     impl From<isize> for #signed_ident {
                         fn from(x: isize) -> Self {
                             Self(x as #signed_inner_ident)
                         }
                     }
-                    
+                    impl TryFrom<#signed_ident> for isize {
+                        type Error = TryFromIntError;
+                        fn try_from(x: #signed_ident) -> Result<Self, Self::Error> {
+                            isize::try_from(x.0).map_err(|_|TryFromIntError)
+                        }
+                    }
+                },
+                std::cmp::Ordering::Equal => quote! {
+                    impl From<isize> for #signed_ident {
+                        fn from(x: isize) -> Self {
+                            Self(x as #signed_inner_ident)
+                        }
+                    }
+                    impl From<#signed_ident> for isize {
+                        fn from(x: #signed_ident) -> Self {
+                            x.0 as isize
+                        }
+                    }
                 },
                 std::cmp::Ordering::Less => quote! {
                     impl TryFrom<isize> for #signed_ident {
@@ -633,6 +672,11 @@ pub fn generate_types(item: proc_macro::TokenStream) -> proc_macro::TokenStream 
                             else {
                                 Err(TryFromIntError)
                             }
+                        }
+                    }
+                    impl From<#signed_ident> for isize {
+                        fn from(x: #signed_ident) -> Self {
+                            x.0 as isize
                         }
                     }
                 }
