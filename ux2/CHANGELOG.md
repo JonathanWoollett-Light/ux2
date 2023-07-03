@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.8.2](https://github.com/JonathanWoollett-Light/ux2/compare/ux2-v0.8.1...ux2-v0.8.2) (2023-07-03)
+
+
+### Bug Fixes
+
+* Changed default to fix doc.rs build ([d0cab69](https://github.com/JonathanWoollett-Light/ux2/commit/d0cab69b1fd61395cc27bbfaa4d0d1d6eedc7f37))
+
 ## [0.8.1](https://github.com/JonathanWoollett-Light/ux2/compare/ux2-v0.8.0...ux2-v0.8.1) (2023-07-02)
 
 
