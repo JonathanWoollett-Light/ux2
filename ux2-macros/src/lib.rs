@@ -757,6 +757,16 @@ pub fn generate_types(item: proc_macro::TokenStream) -> proc_macro::TokenStream 
                 /// ```
                 pub const BITS: core::primitive::u32 = #bits;
 
+                /// Equivalent of an `as` cast.
+                ///
+                /// # Panics
+                ///
+                /// When `x` is out of bounds.
+                pub const fn new(x: #unsigned_inner_ident) -> Self {
+                    assert!(x >= Self::MIN.0 && x <= Self::MAX.0);
+                    Self(x)
+                }
+
                 /// Create a native endian integer value from its representation as a byte
                 /// array in big endian.
                 pub fn from_be_bytes(bytes: [core::primitive::u8; #bytes]) -> Self {
@@ -1108,6 +1118,16 @@ pub fn generate_types(item: proc_macro::TokenStream) -> proc_macro::TokenStream 
                 #[doc=#signed_bits_doc]
                 /// ```
                 pub const BITS: core::primitive::u32 = #bits;
+
+                /// Equivalent of an `as` cast.
+                ///
+                /// # Panics
+                ///
+                /// When `x` is out of bounds.
+                pub const fn new(x: #signed_inner_ident) -> Self {
+                    assert!(x >= Self::MIN.0 && x <= Self::MAX.0);
+                    Self(x)
+                }
 
                 #signed_abs
 
