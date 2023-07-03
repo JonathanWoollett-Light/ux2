@@ -1,6 +1,6 @@
 [package]
 name = "ux2"
-version = "0.8.1"
+version = "0.8.2"
 edition = "2021"
 description = "Non-standard integer types like `u7`, `u9`, `u10`, `u63`, `i7`, `i9` etc."
 license = "Apache-2.0"
