@@ -615,7 +615,7 @@ pub fn generate_types(item: proc_macro::TokenStream) -> proc_macro::TokenStream 
         let signed_from_implementations = {
             let pointer_width_from = std::iter::once(match size.cmp(&TARGET_POINTER_WIDTH) {
                 std::cmp::Ordering::Greater | std::cmp::Ordering::Equal => quote! {
-                    impl From<isize> for signed_ident {
+                    impl From<isize> for #signed_ident {
                         fn from(x: isize) -> Self {
                             Self(x as #signed_inner_ident)
                         }
