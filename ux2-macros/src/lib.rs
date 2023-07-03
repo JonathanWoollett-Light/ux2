@@ -3,6 +3,13 @@ use std::str::FromStr;
 use proc_macro2::{Literal, TokenStream};
 use quote::{format_ident, quote};
 
+#[cfg(target_pointer_width = "16")]
+const TARGET_POINTER_WIDTH: u8 = 16;
+#[cfg(target_pointer_width = "32")]
+const TARGET_POINTER_WIDTH: u8 = 32;
+#[cfg(target_pointer_width = "64")]
+const TARGET_POINTER_WIDTH: u8 = 64;
+
 #[proc_macro]
 pub fn generate_types(item: proc_macro::TokenStream) -> proc_macro::TokenStream {
     let mut items = item.into_iter();
@@ -470,6 +477,31 @@ pub fn generate_types(item: proc_macro::TokenStream) -> proc_macro::TokenStream 
         }).collect::<TokenStream>();
 
         let unsigned_from_implementations = {
+            let pointer_width_from = std::iter::once(match size.cmp(&TARGET_POINTER_WIDTH) {
+                std::cmp::Ordering::Greater | std::cmp::Ordering::Equal => quote! {
+                    impl From<usize> for #unsigned_ident {
+                        fn from(x: usize) -> Self {
+                            Self(x as #unsigned_inner_ident)
+                        }
+                    }
+                    
+                },
+                std::cmp::Ordering::Less => quote! {
+                    impl TryFrom<usize> for #unsigned_ident {
+                        type Error = TryFromIntError;
+                        fn try_from(x: usize) -> Result<Self,Self::Error> {
+                            let y = <#unsigned_inner_ident>::try_from(x).map_err(|_|TryFromIntError)?;
+                            if (Self::MIN.0..=Self::MAX.0).contains(&y) {
+                                Ok(Self(y))
+                            }
+                            else {
+                                Err(TryFromIntError)
+                            }
+                        }
+                    }
+                }
+            });
+
             let primitive_from = [8,16,32,64,128].into_iter().map(|s| {
                 let from_ident = format_ident!("u{s}");
                 let from_ident = quote! { core::primitive::#from_ident };
@@ -578,9 +610,34 @@ pub fn generate_types(item: proc_macro::TokenStream) -> proc_macro::TokenStream 
                     }
                 }
             });
-            primitive_from.chain(smaller).chain(same).chain(bigger).collect::<TokenStream>()
+            pointer_width_from.chain(primitive_from).chain(smaller).chain(same).chain(bigger).collect::<TokenStream>()
         };
         let signed_from_implementations = {
+            let pointer_width_from = std::iter::once(match size.cmp(&TARGET_POINTER_WIDTH) {
+                std::cmp::Ordering::Greater | std::cmp::Ordering::Equal => quote! {
+                    impl From<isize> for signed_ident {
+                        fn from(x: isize) -> Self {
+                            Self(x as #signed_inner_ident)
+                        }
+                    }
+                    
+                },
+                std::cmp::Ordering::Less => quote! {
+                    impl TryFrom<isize> for #signed_ident {
+                        type Error = TryFromIntError;
+                        fn try_from(x: isize) -> Result<Self,Self::Error> {
+                            let y = <#signed_inner_ident>::try_from(x).map_err(|_|TryFromIntError)?;
+                            if (Self::MIN.0..=Self::MAX.0).contains(&y) {
+                                Ok(Self(y))
+                            }
+                            else {
+                                Err(TryFromIntError)
+                            }
+                        }
+                    }
+                }
+            });
+
             let primitive_from = [8,16,32,64,128].into_iter().map(|s| {
                 let from_ident = format_ident!("i{s}");
                 let from_ident = quote! { core::primitive::#from_ident };
@@ -690,7 +747,7 @@ pub fn generate_types(item: proc_macro::TokenStream) -> proc_macro::TokenStream 
                     }
                 }
             });
-            primitive_from.chain(smaller).chain(same).chain(bigger).collect::<TokenStream>()
+            pointer_width_from.chain(primitive_from).chain(smaller).chain(same).chain(bigger).collect::<TokenStream>()
         };
         let unsigned_mask = match size {
             8 | 16 | 32 | 64 | 128 => quote! { #unsigned_min_ident },
