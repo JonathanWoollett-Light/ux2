@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.9.0](https://github.com/JonathanWoollett-Light/ux2/compare/ux2-macros-v0.8.0...ux2-macros-v0.9.0) (2023-08-30)
+
+
+### Features
+
+* `From` & `TryFrom` for `usize` & `isize` ([04f5106](https://github.com/JonathanWoollett-Light/ux2/commit/04f51068f24fa6c00c909e55753b24530f525756))
+* `From` & `TryFrom` into `usize` & `isize` ([2947c09](https://github.com/JonathanWoollett-Light/ux2/commit/2947c09ff152e6fb55347795afe95447951390d4))
+* const `new` constructor ([4be060f](https://github.com/JonathanWoollett-Light/ux2/commit/4be060f21d11fee70e867a683680b563a5fbd101))
+
+
+### Bug Fixes
+
+* Missing octothorp ([01f93f9](https://github.com/JonathanWoollett-Light/ux2/commit/01f93f9a959b280faf9e41b01c21e053fae53c77))
+
 ## [0.8.0](https://github.com/JonathanWoollett-Light/ux2/compare/ux2-macros-v0.7.0...ux2-macros-v0.8.0) (2023-07-02)
 
 
