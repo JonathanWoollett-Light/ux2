@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.8.3](https://github.com/JonathanWoollett-Light/ux2/compare/ux2-v0.8.2...ux2-v0.8.3) (2023-08-30)
+
+
+### Bug Fixes
+
+* CI fixes and refactor ([bec2449](https://github.com/JonathanWoollett-Light/ux2/commit/bec2449d0984458689c91a5bbcc623330ff9f079))
+
 ## [0.8.2](https://github.com/JonathanWoollett-Light/ux2/compare/ux2-v0.8.1...ux2-v0.8.2) (2023-07-03)
 
 
