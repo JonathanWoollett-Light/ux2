@@ -21,10 +21,10 @@
 //!
 //! ```rust
 //! use rand::Rng;
-//! let a = ux2::i8::from(3i8);
-//! let b = ux2::i16::from(rand::thread_rng().gen::<core::primitive::i16>());
-//! let c: ux2::i17 = a + b;
-//! let d: ux2::i8 = c % a;
+//! let a = ux2::i4::try_from(3i8).unwrap();
+//! let b = ux2::i8::from(rand::thread_rng().gen::<core::primitive::i8>());
+//! let c: ux2::i9 = a + b;
+//! let d: ux2::i4 = c % a;
 //! let e: core::primitive::i8 = core::primitive::i8::from(d);
 //! ```
 //!
