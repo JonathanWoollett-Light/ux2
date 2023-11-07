@@ -72,7 +72,7 @@ The compile times increase exponentially, 3s, 7s, 30s, 3m and 46m respectively.
     Compiling ux2 v0.7.0 (/home/jonathan/Projects/ux2/ux2)
         Finished dev [unoptimized + debuginfo] target(s) in 46m 22s
     ```
-<details>
+</details>
 
 ## Why does this exist? Why use this over `ux`?
 
