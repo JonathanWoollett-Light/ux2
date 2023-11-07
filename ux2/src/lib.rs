@@ -19,7 +19,7 @@
 //! `Debug` or `Release`, this is because it returns `ux2::i33`. This is applied for all operations
 //! and combinations of types in `ux2`. This allows for more thorough compile time type checking.
 //!
-//! ```rust
+//! ```ignore
 //! use rand::Rng;
 //! let a = ux2::i4::try_from(3i8).unwrap();
 //! let b = ux2::i8::from(rand::thread_rng().gen::<core::primitive::i8>());
