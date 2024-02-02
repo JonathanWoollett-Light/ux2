@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.8.5](https://github.com/JonathanWoollett-Light/ux2/compare/ux2-v0.8.3...830fb4867373733b9d61ce17a73f388d2d3836ae) (2024-02-02)
+
+
+### Features
+
+* Add `emath` 0.25 compatibility ([830fb48](https://github.com/JonathanWoollett-Light/ux2/commit/830fb4867373733b9d61ce17a73f388d2d3836ae))
+
 ## [0.8.3](https://github.com/JonathanWoollett-Light/ux2/compare/ux2-v0.8.2...ux2-v0.8.3) (2023-08-30)
 
 
