@@ -839,6 +839,11 @@ pub fn generate_types(item: proc_macro::TokenStream) -> proc_macro::TokenStream 
                     Self::new(num as #unsigned_inner_ident)
                 }
             }
+            impl core::default::Default for #unsigned_ident {
+                fn default() -> Self {
+                    #unsigned_ident::new(#unsigned_inner_ident::default())
+                }
+            }
             impl #unsigned_ident {
                 fn mask(self) -> Self {
                     Self(self.0 & #unsigned_mask.overflowing_sub(#unsigned_one).0)
