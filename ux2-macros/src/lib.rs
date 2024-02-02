@@ -823,6 +823,22 @@ pub fn generate_types(item: proc_macro::TokenStream) -> proc_macro::TokenStream 
             #[repr(transparent)]
             #[derive(Debug, Eq, PartialEq, Ord, PartialOrd, Clone, Copy, Hash)]
             pub struct #unsigned_ident(#unsigned_inner_ident);
+            #[cfg(feature = "emath")]
+            impl emath::Numeric for #unsigned_ident {
+                const INTEGRAL: bool = false;
+                const MIN: Self = #unsigned_ident::MIN;
+                const MAX: Self = #unsigned_ident::MAX;
+
+                #[inline(always)]
+                fn to_f64(self) -> f64 {
+                    self.0 as f64
+                }
+
+                #[inline(always)]
+                fn from_f64(num: f64) -> Self {
+                    Self::new(num as #unsigned_inner_ident)
+                }
+            }
             impl #unsigned_ident {
                 fn mask(self) -> Self {
                     Self(self.0 & #unsigned_mask.overflowing_sub(#unsigned_one).0)
