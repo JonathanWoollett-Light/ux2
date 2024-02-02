@@ -823,6 +823,11 @@ pub fn generate_types(item: proc_macro::TokenStream) -> proc_macro::TokenStream 
             #[repr(transparent)]
             #[derive(Debug, Eq, PartialEq, Ord, PartialOrd, Clone, Copy, Hash)]
             pub struct #unsigned_ident(#unsigned_inner_ident);
+            impl core::default::Default for #unsigned_ident {
+                fn default() -> Self {
+                    #unsigned_ident::new(#unsigned_inner_ident::default())
+                }
+            }
             impl #unsigned_ident {
                 fn mask(self) -> Self {
                     Self(self.0 & #unsigned_mask.overflowing_sub(#unsigned_one).0)
@@ -1179,6 +1184,11 @@ pub fn generate_types(item: proc_macro::TokenStream) -> proc_macro::TokenStream 
             #[repr(transparent)]
             #[derive(Debug, Eq, PartialEq, Ord, PartialOrd, Clone, Copy, Hash)]
             pub struct #signed_ident(#signed_inner_ident);
+            impl core::default::Default for #signed_ident {
+                fn default() -> Self {
+                    #signed_ident::new(#signed_inner_ident::default())
+                }
+            }
             impl #signed_ident {
                 fn mask(self) -> Self {
                     let x = if self.0 & (#signed_one << (#size - 1)) == 0 {
