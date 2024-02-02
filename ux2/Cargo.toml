@@ -17,12 +17,12 @@ default = ["8"]
 32 = ["16"]
 16 = ["8"]
 8 = []
-emath = ["dep:emath"]
+emath_0_25 = ["dep:emath_0_25"]
 
 [dependencies]
 serde = { version = "1.0.160", features = ["derive"], optional = true }
 ux2-macros =  { path = "../ux2-macros", version = "0.10.0" }
-emath = {version = "0.25", optional = true}
+emath_0_25 = {package = "emath", version = "0.25", optional = true}
 
 [dev-dependencies]
 criterion = "0.5.1"
