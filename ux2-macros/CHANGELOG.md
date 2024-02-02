@@ -6,6 +6,7 @@
 ### Features
 
 * Add `emath::Number` compat ([830fb48](https://github.com/JonathanWoollett-Light/ux2/commit/830fb4867373733b9d61ce17a73f388d2d3836ae))
+* Add Default impl ([0816dc83](https://github.com/JonathanWoollett-Light/ux2/commit/0816dc83cb61a54bb99d5967093fc4180af1c4eb))
 
 ## [0.9.0](https://github.com/JonathanWoollett-Light/ux2/compare/ux2-macros-v0.8.0...ux2-macros-v0.9.0) (2023-08-30)
 
