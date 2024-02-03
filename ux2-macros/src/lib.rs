@@ -69,6 +69,11 @@ pub fn generate_types(item: proc_macro::TokenStream) -> proc_macro::TokenStream 
         let unsigned_max_doc = format!(" assert_eq!({unsigned_ident}::MAX, {unsigned_ident}::try_from({unsigned_max_ident}).unwrap());");
         let unsigned_min_doc = format!(" assert_eq!({unsigned_ident}::MIN, {unsigned_ident}::try_from({unsigned_min_ident}).unwrap());");
         let unsigned_bits_doc = format!("assert_eq!({unsigned_ident}::BITS, {size});");
+        let unsigned_into_inner_doc = format!("assert_eq!({unsigned_ident}::default().into_inner(), {unsigned_inner_ident}::default());");
+        let unsigned_new_mask = format!("assert_eq!({unsigned_ident}::new_mask({unsigned_inner_ident}::MAX), {unsigned_ident}::MAX);
+assert_eq!({unsigned_ident}::new_mask({unsigned_inner_ident}::MIN), {unsigned_ident}::MIN);
+assert_eq!({unsigned_ident}::new_mask({unsigned_inner_ident}::default()), {unsigned_ident}::default());
+");
         let unsigned_wrapping_add_examples = format!(" assert_eq!({unsigned_ident}::MAX.wrapping_add({unsigned_ident}::try_from({unsigned_one}).unwrap()), {unsigned_ident}::MIN);");
 
         let unsigned_add_ops = (1..max).filter(|rhs| std::cmp::max(rhs,&size) < &max).map(|s| {
@@ -887,6 +892,36 @@ pub fn generate_types(item: proc_macro::TokenStream) -> proc_macro::TokenStream 
                 pub const fn new(x: #unsigned_inner_ident) -> Self {
                     assert!(x >= Self::MIN.0 && x <= Self::MAX.0);
                     Self(x)
+                }
+
+                /// Equivalent of an `as` cast.
+                /// Truncates the value, if the argument is too big
+                ///
+                /// # Examples
+                ///
+                /// ```
+                /// # use ux2::*;
+                #[doc=#unsigned_new_mask]
+                /// ```
+                pub const fn new_mask(x: #unsigned_inner_ident) -> Self {
+                    if x >= Self::MIN.0 && x <= Self::MAX.0 {
+                        Self(x)
+                    }else{
+                        Self(x&Self::MAX.0)
+                    }
+                }
+
+                /// Gets the inner value
+                ///
+                ///
+                /// # Examples
+                ///
+                /// ```
+                /// # use ux2::*;
+                #[doc=#unsigned_into_inner_doc]
+                /// ```
+                pub const fn into_inner(self) -> #unsigned_inner_ident {
+                    self.0
                 }
 
                 /// Create a native endian integer value from its representation as a byte
