@@ -69,6 +69,11 @@ pub fn generate_types(item: proc_macro::TokenStream) -> proc_macro::TokenStream 
         let unsigned_max_doc = format!(" assert_eq!({unsigned_ident}::MAX, {unsigned_ident}::try_from({unsigned_max_ident}).unwrap());");
         let unsigned_min_doc = format!(" assert_eq!({unsigned_ident}::MIN, {unsigned_ident}::try_from({unsigned_min_ident}).unwrap());");
         let unsigned_bits_doc = format!("assert_eq!({unsigned_ident}::BITS, {size});");
+        let unsigned_into_inner_doc = format!("assert_eq!({unsigned_ident}::default().into_inner(), {unsigned_inner_ident}::default());");
+        let unsigned_new_mask = format!("assert_eq!({unsigned_ident}::new_mask({unsigned_inner_ident}::MAX), {unsigned_ident}::MAX);
+assert_eq!({unsigned_ident}::new_mask({unsigned_inner_ident}::MIN), {unsigned_ident}::MIN);
+assert_eq!({unsigned_ident}::new_mask({unsigned_inner_ident}::default()), {unsigned_ident}::default());
+");
         let unsigned_wrapping_add_examples = format!(" assert_eq!({unsigned_ident}::MAX.wrapping_add({unsigned_ident}::try_from({unsigned_one}).unwrap()), {unsigned_ident}::MIN);");
 
         let unsigned_add_ops = (1..max).filter(|rhs| std::cmp::max(rhs,&size) < &max).map(|s| {
@@ -298,6 +303,11 @@ pub fn generate_types(item: proc_macro::TokenStream) -> proc_macro::TokenStream 
         let signed_min_doc = format!(" assert_eq!({signed_ident}::MIN, {signed_ident}::try_from({signed_min_ident}).unwrap());");
         let signed_bits_doc = format!(" assert_eq!({signed_ident}::BITS, {size});");
         let signed_wrapping_add_examples = format!(" assert_eq!({signed_ident}::MIN.wrapping_add({signed_ident}::try_from({signed_minus_one}).unwrap()), {signed_ident}::MAX);");
+        let signed_into_inner_doc = format!("assert_eq!({signed_ident}::default().into_inner(), {signed_inner_ident}::default());");
+        let signed_new_mask = format!("assert_eq!({signed_ident}::new_mask({signed_inner_ident}::MAX), {signed_ident}::MAX);
+assert_eq!({signed_ident}::new_mask({signed_inner_ident}::MIN), {signed_ident}::MIN);
+assert_eq!({signed_ident}::new_mask({signed_inner_ident}::default()), {signed_ident}::default());
+");
 
         let signed_add_ops = (1..max).filter(|rhs| std::cmp::max(rhs,&size) < &max).map(|s| {
             let signed_rhs = format_ident!("i{s}");
@@ -868,6 +878,36 @@ pub fn generate_types(item: proc_macro::TokenStream) -> proc_macro::TokenStream 
                     Self(x)
                 }
 
+                /// Equivalent of an `as` cast.
+                /// Truncates the value, if the argument is too big
+                ///
+                /// # Examples
+                ///
+                /// ```
+                /// # use ux2::*;
+                #[doc=#unsigned_new_mask]
+                /// ```
+                pub const fn new_mask(x: #unsigned_inner_ident) -> Self {
+                    if x >= Self::MIN.0 && x <= Self::MAX.0 {
+                        Self(x)
+                    }else{
+                        Self(x&Self::MAX.0)
+                    }
+                }
+
+                /// Gets the inner value
+                ///
+                ///
+                /// # Examples
+                ///
+                /// ```
+                /// # use ux2::*;
+                #[doc=#unsigned_into_inner_doc]
+                /// ```
+                pub const fn into_inner(self) -> #unsigned_inner_ident {
+                    self.0
+                }
+
                 /// Create a native endian integer value from its representation as a byte
                 /// array in big endian.
                 pub fn from_be_bytes(bytes: [core::primitive::u8; #bytes]) -> Self {
@@ -1228,6 +1268,38 @@ pub fn generate_types(item: proc_macro::TokenStream) -> proc_macro::TokenStream 
                 pub const fn new(x: #signed_inner_ident) -> Self {
                     assert!(x >= Self::MIN.0 && x <= Self::MAX.0);
                     Self(x)
+                }
+
+                /// Equivalent of an `as` cast.
+                /// Truncates the value, if the argument is too big
+                ///
+                /// # Examples
+                ///
+                /// ```
+                /// # use ux2::*;
+                #[doc=#signed_new_mask]
+                /// ```
+                pub const fn new_mask(x: #signed_inner_ident) -> Self {
+                    if x >= Self::MIN.0 && x <= Self::MAX.0 {
+                        Self(x)
+                    }else if x < Self::MIN.0 {
+                        Self::MIN
+                    }else{
+                        Self::MAX
+                    }
+                }
+
+                /// Gets the inner value
+                ///
+                ///
+                /// # Examples
+                ///
+                /// ```
+                /// # use ux2::*;
+                #[doc=#signed_into_inner_doc]
+                /// ```
+                pub const fn into_inner(self) -> #signed_inner_ident {
+                    self.0
                 }
 
                 #signed_abs
