@@ -5,6 +5,7 @@
 
 ### Features
 
+* Add `no_std` compatibility ([191d4f48](https://github.com/JonathanWoollett-Light/ux2/commit/191d4f480c73addc3966be1631955c4a0362647f))
 * Add `emath` 0.25 compatibility ([ae8e529c](https://github.com/JonathanWoollett-Light/ux2/commit/ae8e529c8dc02a0f18be338ca0e2c26fabeec8b4))
 * Add Default impl ([0816dc83](https://github.com/JonathanWoollett-Light/ux2/commit/0816dc83cb61a54bb99d5967093fc4180af1c4eb))
 * Add `new_mask` and `into_inner` ([88864723](https://github.com/JonathanWoollett-Light/ux2/commit/8886472305f3227586112e3a380b7121be5645aa))
