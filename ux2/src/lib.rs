@@ -1,4 +1,5 @@
 #![cfg_attr(docsrs, feature(doc_auto_cfg))]
+#![cfg_attr(not(feature = "std"), no_std)]
 // https://doc.rust-lang.org/rustdoc/unstable-features.html#doc_auto_cfg-automatically-generate-doccfg
 
 //! # uX2: A better [uX](https://github.com/rust-ux/uX)
@@ -105,21 +106,23 @@ use emath_number_impl;
 /// A mimic of [`std::num::TryFromIntError`] that can be constructed on stable.
 #[derive(Debug, Eq, PartialEq)]
 pub struct TryFromIntError;
-impl std::fmt::Display for TryFromIntError {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+impl core::fmt::Display for TryFromIntError {
+    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
         write!(f, "Failed `TryFrom`.")
     }
 }
+#[cfg(feature = "std")]
 impl std::error::Error for TryFromIntError {}
 
 /// A mimic of [`std::num::ParseIntError`] that can be constructed on stable.
 #[derive(Debug, Eq, PartialEq)]
 pub struct ParseIntError;
-impl std::fmt::Display for ParseIntError {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+impl core::fmt::Display for ParseIntError {
+    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
         write!(f, "Failed `TryFrom`.")
     }
 }
+#[cfg(feature = "std")]
 impl std::error::Error for ParseIntError {}
 
 /// https://doc.rust-lang.org/std/primitive.array.html#method.split_array_mut
