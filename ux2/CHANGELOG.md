@@ -5,6 +5,7 @@
 
 ### Features
 
+* Add `emath` 0.26 compatibility ([fc17d1c0](https://github.com/JonathanWoollett-Light/ux2/commit/fc17d1c0b24065667e2c24740224d178e9cc9d1f))
 * Add `no_std` compatibility ([191d4f48](https://github.com/JonathanWoollett-Light/ux2/commit/191d4f480c73addc3966be1631955c4a0362647f))
 * Add `emath` 0.25 compatibility ([ae8e529c](https://github.com/JonathanWoollett-Light/ux2/commit/ae8e529c8dc02a0f18be338ca0e2c26fabeec8b4))
 * Add Default impl ([0816dc83](https://github.com/JonathanWoollett-Light/ux2/commit/0816dc83cb61a54bb99d5967093fc4180af1c4eb))
