@@ -1,4 +1,4 @@
-use std::str::FromStr;
+use core::str::FromStr;
 
 use proc_macro2::{Literal, TokenStream};
 use quote::{format_ident, quote};
@@ -22,7 +22,7 @@ pub fn generate_types(item: proc_macro::TokenStream) -> proc_macro::TokenStream 
     assert!(items.next().is_none());
 
     let output = (1..=max).map(|size| {
-        let inner_size = std::cmp::max(size.next_power_of_two(),8);
+        let inner_size = core::cmp::max(size.next_power_of_two(),8);
         let inner_bytes = (inner_size / 8) as usize;
         let bits = size as u32;
         let bytes = match size % 8 {
@@ -71,13 +71,13 @@ pub fn generate_types(item: proc_macro::TokenStream) -> proc_macro::TokenStream 
         let unsigned_bits_doc = format!("assert_eq!({unsigned_ident}::BITS, {size});");
         let unsigned_wrapping_add_examples = format!(" assert_eq!({unsigned_ident}::MAX.wrapping_add({unsigned_ident}::try_from({unsigned_one}).unwrap()), {unsigned_ident}::MIN);");
 
-        let unsigned_add_ops = (1..max).filter(|rhs| std::cmp::max(rhs,&size) < &max).map(|s| {
+        let unsigned_add_ops = (1..max).filter(|rhs| core::cmp::max(rhs,&size) < &max).map(|s| {
             let rhs_ident = format_ident!("u{s}");
-            let out_size = std::cmp::max(size,s) + 1;
+            let out_size = core::cmp::max(size,s) + 1;
             let out_ident = format_ident!("u{out_size}");
 
             quote! {
-                impl std::ops::Add<&#rhs_ident> for &#unsigned_ident {
+                impl core::ops::Add<&#rhs_ident> for &#unsigned_ident {
                     type Output = #out_ident;
                     fn add(self, rhs: &#rhs_ident) -> Self::Output {
                         let mut x = <#out_ident>::from(*self).0;
@@ -86,7 +86,7 @@ pub fn generate_types(item: proc_macro::TokenStream) -> proc_macro::TokenStream 
                         #out_ident(x)
                     }
                 }
-                impl std::ops::Add<&#rhs_ident> for #unsigned_ident {
+                impl core::ops::Add<&#rhs_ident> for #unsigned_ident {
                     type Output = #out_ident;
                     fn add(self, rhs: &#rhs_ident) -> Self::Output {
                         let mut x = <#out_ident>::from(self).0;
@@ -95,7 +95,7 @@ pub fn generate_types(item: proc_macro::TokenStream) -> proc_macro::TokenStream 
                         #out_ident(x)
                     }
                 }
-                impl<'a> std::ops::Add<#rhs_ident> for &'a #unsigned_ident {
+                impl<'a> core::ops::Add<#rhs_ident> for &'a #unsigned_ident {
                     type Output = #out_ident;
                     fn add(self, rhs: #rhs_ident) -> Self::Output {
                         let mut x = <#out_ident>::from(*self).0;
@@ -104,7 +104,7 @@ pub fn generate_types(item: proc_macro::TokenStream) -> proc_macro::TokenStream 
                         #out_ident(x)
                     }
                 }
-                impl std::ops::Add<#rhs_ident> for #unsigned_ident {
+                impl core::ops::Add<#rhs_ident> for #unsigned_ident {
                     type Output = #out_ident;
                     fn add(self, rhs: #rhs_ident) -> Self::Output {
                         let mut x = <#out_ident>::from(self).0;
@@ -122,7 +122,7 @@ pub fn generate_types(item: proc_macro::TokenStream) -> proc_macro::TokenStream 
             let out_ident = format_ident!("u{out_size}");
 
             quote! {
-                impl std::ops::Mul<&#rhs_ident> for &#unsigned_ident {
+                impl core::ops::Mul<&#rhs_ident> for &#unsigned_ident {
                     type Output = #out_ident;
                     fn mul(self, rhs: &#rhs_ident) -> Self::Output {
                         let mut x = <#out_ident>::from(*self).0;
@@ -131,7 +131,7 @@ pub fn generate_types(item: proc_macro::TokenStream) -> proc_macro::TokenStream 
                         #out_ident(z)
                     }
                 }
-                impl std::ops::Mul<&#rhs_ident> for #unsigned_ident {
+                impl core::ops::Mul<&#rhs_ident> for #unsigned_ident {
                     type Output = #out_ident;
                     fn mul(self, rhs: &#rhs_ident) -> Self::Output {
                         let mut x = <#out_ident>::from(self).0;
@@ -140,7 +140,7 @@ pub fn generate_types(item: proc_macro::TokenStream) -> proc_macro::TokenStream 
                         #out_ident(z)
                     }
                 }
-                impl<'a> std::ops::Mul<#rhs_ident> for &'a #unsigned_ident {
+                impl<'a> core::ops::Mul<#rhs_ident> for &'a #unsigned_ident {
                     type Output = #out_ident;
                     fn mul(self, rhs: #rhs_ident) -> Self::Output {
                         let mut x = <#out_ident>::from(*self).0;
@@ -149,7 +149,7 @@ pub fn generate_types(item: proc_macro::TokenStream) -> proc_macro::TokenStream 
                         #out_ident(z)
                     }
                 }
-                impl std::ops::Mul<#rhs_ident> for #unsigned_ident {
+                impl core::ops::Mul<#rhs_ident> for #unsigned_ident {
                     type Output = #out_ident;
                     fn mul(self, rhs: #rhs_ident) -> Self::Output {
                         let mut x = <#out_ident>::from(self).0;
@@ -161,13 +161,13 @@ pub fn generate_types(item: proc_macro::TokenStream) -> proc_macro::TokenStream 
             }
         }).collect::<TokenStream>();
 
-        let unsigned_sub_ops = (1..max).filter(|rhs| std::cmp::max(rhs,&size) < &max).map(|s| {
+        let unsigned_sub_ops = (1..max).filter(|rhs| core::cmp::max(rhs,&size) < &max).map(|s| {
             let rhs_ident = format_ident!("u{s}");
-            let out_size = std::cmp::max(size,s)+1;
+            let out_size = core::cmp::max(size,s)+1;
             let out_ident = format_ident!("i{out_size}");
 
             quote! {
-                impl std::ops::Sub<&#rhs_ident> for &#unsigned_ident {
+                impl core::ops::Sub<&#rhs_ident> for &#unsigned_ident {
                     type Output = #out_ident;
                     fn sub(self, rhs: &#rhs_ident) -> Self::Output {
                         let mut x = <#out_ident>::from(*self).0;
@@ -176,7 +176,7 @@ pub fn generate_types(item: proc_macro::TokenStream) -> proc_macro::TokenStream 
                         #out_ident(x)
                     }
                 }
-                impl std::ops::Sub<&#rhs_ident> for #unsigned_ident {
+                impl core::ops::Sub<&#rhs_ident> for #unsigned_ident {
                     type Output = #out_ident;
                     fn sub(self, rhs: &#rhs_ident) -> Self::Output {
                         let mut x = <#out_ident>::from(self).0;
@@ -185,7 +185,7 @@ pub fn generate_types(item: proc_macro::TokenStream) -> proc_macro::TokenStream 
                         #out_ident(x)
                     }
                 }
-                impl<'a> std::ops::Sub<#rhs_ident> for &'a #unsigned_ident {
+                impl<'a> core::ops::Sub<#rhs_ident> for &'a #unsigned_ident {
                     type Output = #out_ident;
                     fn sub(self, rhs: #rhs_ident) -> Self::Output {
                         let mut x = <#out_ident>::from(*self).0;
@@ -194,7 +194,7 @@ pub fn generate_types(item: proc_macro::TokenStream) -> proc_macro::TokenStream 
                         #out_ident(x)
                     }
                 }
-                impl std::ops::Sub<#rhs_ident> for #unsigned_ident {
+                impl core::ops::Sub<#rhs_ident> for #unsigned_ident {
                     type Output = #out_ident;
                     fn sub(self, rhs: #rhs_ident) -> Self::Output {
                         let mut x = <#out_ident>::from(self).0;
@@ -208,12 +208,12 @@ pub fn generate_types(item: proc_macro::TokenStream) -> proc_macro::TokenStream 
 
         let unsigned_rem_ops = (1..max).filter(|rhs|rhs < &max).map(|s|{
             let rhs_ident = format_ident!("u{s}");
-            let out_size = std::cmp::min(size,s);
+            let out_size = core::cmp::min(size,s);
             let out_ident = format_ident!("u{out_size}");
-            let max_ident = std::cmp::max(size,s);
+            let max_ident = core::cmp::max(size,s);
             let max_ident = format_ident!("u{max_ident}");
             quote! {
-                impl std::ops::Rem<&#rhs_ident> for &#unsigned_ident {
+                impl core::ops::Rem<&#rhs_ident> for &#unsigned_ident {
                     type Output = #out_ident;
                     fn rem(self, rhs: &#rhs_ident) -> Self::Output {
                         let x = <#max_ident>::from(*self).0;
@@ -221,7 +221,7 @@ pub fn generate_types(item: proc_macro::TokenStream) -> proc_macro::TokenStream 
                         #out_ident::try_from(x % y).unwrap()
                     }
                 }
-                impl std::ops::Rem<&#rhs_ident> for #unsigned_ident {
+                impl core::ops::Rem<&#rhs_ident> for #unsigned_ident {
                     type Output = #out_ident;
                     fn rem(self, rhs: &#rhs_ident) -> Self::Output {
                         let x = <#max_ident>::from(self).0;
@@ -229,7 +229,7 @@ pub fn generate_types(item: proc_macro::TokenStream) -> proc_macro::TokenStream 
                         #out_ident::try_from(x % y).unwrap()
                     }
                 }
-                impl<'a> std::ops::Rem<#rhs_ident> for &'a #unsigned_ident {
+                impl<'a> core::ops::Rem<#rhs_ident> for &'a #unsigned_ident {
                     type Output = #out_ident;
                     fn rem(self, rhs: #rhs_ident) -> Self::Output {
                         let x = <#max_ident>::from(*self).0;
@@ -237,7 +237,7 @@ pub fn generate_types(item: proc_macro::TokenStream) -> proc_macro::TokenStream 
                         #out_ident::try_from(x % y).unwrap()
                     }
                 }
-                impl std::ops::Rem<#rhs_ident> for #unsigned_ident {
+                impl core::ops::Rem<#rhs_ident> for #unsigned_ident {
                     type Output = #out_ident;
                     fn rem(self, rhs: #rhs_ident) -> Self::Output {
                         let x = <#max_ident>::from(self).0;
@@ -299,13 +299,13 @@ pub fn generate_types(item: proc_macro::TokenStream) -> proc_macro::TokenStream 
         let signed_bits_doc = format!(" assert_eq!({signed_ident}::BITS, {size});");
         let signed_wrapping_add_examples = format!(" assert_eq!({signed_ident}::MIN.wrapping_add({signed_ident}::try_from({signed_minus_one}).unwrap()), {signed_ident}::MAX);");
 
-        let signed_add_ops = (1..max).filter(|rhs| std::cmp::max(rhs,&size) < &max).map(|s| {
+        let signed_add_ops = (1..max).filter(|rhs| core::cmp::max(rhs,&size) < &max).map(|s| {
             let signed_rhs = format_ident!("i{s}");
-            let output_size = std::cmp::max(size,s) + 1;
+            let output_size = core::cmp::max(size,s) + 1;
             let signed_ident_plus_one = format_ident!("i{output_size}");
 
             quote! {
-                impl std::ops::Add<&#signed_rhs> for &#signed_ident {
+                impl core::ops::Add<&#signed_rhs> for &#signed_ident {
                     type Output = #signed_ident_plus_one;
                     fn add(self, rhs: &#signed_rhs) -> Self::Output {
                         let mut x = <#signed_ident_plus_one>::from(*self).0;
@@ -314,7 +314,7 @@ pub fn generate_types(item: proc_macro::TokenStream) -> proc_macro::TokenStream 
                         #signed_ident_plus_one(x)
                     }
                 }
-                impl std::ops::Add<&#signed_rhs> for #signed_ident {
+                impl core::ops::Add<&#signed_rhs> for #signed_ident {
                     type Output = #signed_ident_plus_one;
                     fn add(self, rhs: &#signed_rhs) -> Self::Output {
                         let mut x = <#signed_ident_plus_one>::from(self).0;
@@ -323,7 +323,7 @@ pub fn generate_types(item: proc_macro::TokenStream) -> proc_macro::TokenStream 
                         #signed_ident_plus_one(x)
                     }
                 }
-                impl<'a> std::ops::Add<#signed_rhs> for &'a #signed_ident {
+                impl<'a> core::ops::Add<#signed_rhs> for &'a #signed_ident {
                     type Output = #signed_ident_plus_one;
                     fn add(self, rhs: #signed_rhs) -> Self::Output {
                         let mut x = <#signed_ident_plus_one>::from(*self).0;
@@ -332,7 +332,7 @@ pub fn generate_types(item: proc_macro::TokenStream) -> proc_macro::TokenStream 
                         #signed_ident_plus_one(x)
                     }
                 }
-                impl std::ops::Add<#signed_rhs> for #signed_ident {
+                impl core::ops::Add<#signed_rhs> for #signed_ident {
                     type Output = #signed_ident_plus_one;
                     fn add(self, rhs: #signed_rhs) -> Self::Output {
                         let mut x = <#signed_ident_plus_one>::from(self).0;
@@ -350,7 +350,7 @@ pub fn generate_types(item: proc_macro::TokenStream) -> proc_macro::TokenStream 
             let out_ident = format_ident!("i{out}");
 
             quote! {
-                impl std::ops::Mul<&#rhs_ident> for &#signed_ident {
+                impl core::ops::Mul<&#rhs_ident> for &#signed_ident {
                     type Output = #out_ident;
                     fn mul(self, rhs: &#rhs_ident) -> Self::Output {
                         let mut x = <#out_ident>::from(*self).0;
@@ -359,7 +359,7 @@ pub fn generate_types(item: proc_macro::TokenStream) -> proc_macro::TokenStream 
                         #out_ident(z)
                     }
                 }
-                impl std::ops::Mul<&#rhs_ident> for #signed_ident {
+                impl core::ops::Mul<&#rhs_ident> for #signed_ident {
                     type Output = #out_ident;
                     fn mul(self, rhs: &#rhs_ident) -> Self::Output {
                         let mut x = <#out_ident>::from(self).0;
@@ -368,7 +368,7 @@ pub fn generate_types(item: proc_macro::TokenStream) -> proc_macro::TokenStream 
                         #out_ident(z)
                     }
                 }
-                impl<'a> std::ops::Mul<#rhs_ident> for &'a #signed_ident {
+                impl<'a> core::ops::Mul<#rhs_ident> for &'a #signed_ident {
                     type Output = #out_ident;
                     fn mul(self, rhs: #rhs_ident) -> Self::Output {
                         let mut x = <#out_ident>::from(*self).0;
@@ -377,7 +377,7 @@ pub fn generate_types(item: proc_macro::TokenStream) -> proc_macro::TokenStream 
                         #out_ident(z)
                     }
                 }
-                impl std::ops::Mul<#rhs_ident> for #signed_ident {
+                impl core::ops::Mul<#rhs_ident> for #signed_ident {
                     type Output = #out_ident;
                     fn mul(self, rhs: #rhs_ident) -> Self::Output {
                         let mut x = <#out_ident>::from(self).0;
@@ -389,13 +389,13 @@ pub fn generate_types(item: proc_macro::TokenStream) -> proc_macro::TokenStream 
             }
         }).collect::<TokenStream>();
 
-        let signed_sub_ops = (1..max).filter(|rhs| std::cmp::max(rhs,&size) < &max).map(|s| {
+        let signed_sub_ops = (1..max).filter(|rhs| core::cmp::max(rhs,&size) < &max).map(|s| {
             let signed_rhs = format_ident!("i{s}");
-            let output_size = std::cmp::max(size,s) + 1;
+            let output_size = core::cmp::max(size,s) + 1;
             let signed_ident_plus_one = format_ident!("i{output_size}");
 
             quote! {
-                impl std::ops::Sub<&#signed_rhs> for &#signed_ident {
+                impl core::ops::Sub<&#signed_rhs> for &#signed_ident {
                     type Output = #signed_ident_plus_one;
                     fn sub(self, rhs: &#signed_rhs) -> Self::Output {
                         let mut x = <#signed_ident_plus_one>::from(*self).0;
@@ -404,7 +404,7 @@ pub fn generate_types(item: proc_macro::TokenStream) -> proc_macro::TokenStream 
                         #signed_ident_plus_one(x)
                     }
                 }
-                impl std::ops::Sub<&#signed_rhs> for #signed_ident {
+                impl core::ops::Sub<&#signed_rhs> for #signed_ident {
                     type Output = #signed_ident_plus_one;
                     fn sub(self, rhs: &#signed_rhs) -> Self::Output {
                         let mut x = <#signed_ident_plus_one>::from(self).0;
@@ -413,7 +413,7 @@ pub fn generate_types(item: proc_macro::TokenStream) -> proc_macro::TokenStream 
                         #signed_ident_plus_one(x)
                     }
                 }
-                impl<'a> std::ops::Sub<#signed_rhs> for &'a #signed_ident {
+                impl<'a> core::ops::Sub<#signed_rhs> for &'a #signed_ident {
                     type Output = #signed_ident_plus_one;
                     fn sub(self, rhs: #signed_rhs) -> Self::Output {
                         let mut x = <#signed_ident_plus_one>::from(*self).0;
@@ -422,7 +422,7 @@ pub fn generate_types(item: proc_macro::TokenStream) -> proc_macro::TokenStream 
                         #signed_ident_plus_one(x)
                     }
                 }
-                impl std::ops::Sub<#signed_rhs> for #signed_ident {
+                impl core::ops::Sub<#signed_rhs> for #signed_ident {
                     type Output = #signed_ident_plus_one;
                     fn sub(self, rhs: #signed_rhs) -> Self::Output {
                         let mut x = <#signed_ident_plus_one>::from(self).0;
@@ -436,12 +436,12 @@ pub fn generate_types(item: proc_macro::TokenStream) -> proc_macro::TokenStream 
 
         let signed_rem_ops = (1..max).filter(|rhs|rhs < &max).map(|s|{
             let rhs_ident = format_ident!("i{s}");
-            let out_size = std::cmp::min(size,s);
+            let out_size = core::cmp::min(size,s);
             let out_ident = format_ident!("i{out_size}");
-            let max_ident = std::cmp::max(size,s);
+            let max_ident = core::cmp::max(size,s);
             let max_ident = format_ident!("i{max_ident}");
             quote! {
-                impl std::ops::Rem<&#rhs_ident> for &#signed_ident {
+                impl core::ops::Rem<&#rhs_ident> for &#signed_ident {
                     type Output = #out_ident;
                     fn rem(self, rhs: &#rhs_ident) -> Self::Output {
                         let x = <#max_ident>::from(*self).0;
@@ -449,7 +449,7 @@ pub fn generate_types(item: proc_macro::TokenStream) -> proc_macro::TokenStream 
                         #out_ident::try_from(x % y).unwrap()
                     }
                 }
-                impl std::ops::Rem<&#rhs_ident> for #signed_ident {
+                impl core::ops::Rem<&#rhs_ident> for #signed_ident {
                     type Output = #out_ident;
                     fn rem(self, rhs: &#rhs_ident) -> Self::Output {
                         let x = <#max_ident>::from(self).0;
@@ -457,7 +457,7 @@ pub fn generate_types(item: proc_macro::TokenStream) -> proc_macro::TokenStream 
                         #out_ident::try_from(x % y).unwrap()
                     }
                 }
-                impl<'a> std::ops::Rem<#rhs_ident> for &'a #signed_ident {
+                impl<'a> core::ops::Rem<#rhs_ident> for &'a #signed_ident {
                     type Output = #out_ident;
                     fn rem(self, rhs: #rhs_ident) -> Self::Output {
                         let x = <#max_ident>::from(*self).0;
@@ -465,7 +465,7 @@ pub fn generate_types(item: proc_macro::TokenStream) -> proc_macro::TokenStream 
                         #out_ident::try_from(x % y).unwrap()
                     }
                 }
-                impl std::ops::Rem<#rhs_ident> for #signed_ident {
+                impl core::ops::Rem<#rhs_ident> for #signed_ident {
                     type Output = #out_ident;
                     fn rem(self, rhs: #rhs_ident) -> Self::Output {
                         let x = <#max_ident>::from(self).0;
@@ -477,8 +477,8 @@ pub fn generate_types(item: proc_macro::TokenStream) -> proc_macro::TokenStream 
         }).collect::<TokenStream>();
 
         let unsigned_from_implementations = {
-            let pointer_width_from = std::iter::once(match size.cmp(&TARGET_POINTER_WIDTH) {
-                std::cmp::Ordering::Greater => quote! {
+            let pointer_width_from = core::iter::once(match size.cmp(&TARGET_POINTER_WIDTH) {
+                core::cmp::Ordering::Greater => quote! {
                     impl From<usize> for #unsigned_ident {
                         fn from(x: usize) -> Self {
                             Self(x as #unsigned_inner_ident)
@@ -491,7 +491,7 @@ pub fn generate_types(item: proc_macro::TokenStream) -> proc_macro::TokenStream 
                         }
                     }
                 },
-                std::cmp::Ordering::Equal => quote! {
+                core::cmp::Ordering::Equal => quote! {
                     impl From<usize> for #unsigned_ident {
                         fn from(x: usize) -> Self {
                             Self(x as #unsigned_inner_ident)
@@ -503,7 +503,7 @@ pub fn generate_types(item: proc_macro::TokenStream) -> proc_macro::TokenStream 
                         }
                     }
                 },
-                std::cmp::Ordering::Less => quote! {
+                core::cmp::Ordering::Less => quote! {
                     impl TryFrom<usize> for #unsigned_ident {
                         type Error = TryFromIntError;
                         fn try_from(x: usize) -> Result<Self, Self::Error> {
@@ -528,7 +528,7 @@ pub fn generate_types(item: proc_macro::TokenStream) -> proc_macro::TokenStream 
                 let from_ident = format_ident!("u{s}");
                 let from_ident = quote! { core::primitive::#from_ident };
                 match size.cmp(&s) {
-                    std::cmp::Ordering::Equal => quote!{
+                    core::cmp::Ordering::Equal => quote!{
                         impl From<#from_ident> for #unsigned_ident {
                             fn from(x: #from_ident) -> Self {
                                 Self(<#unsigned_inner_ident>::from(x))
@@ -540,7 +540,7 @@ pub fn generate_types(item: proc_macro::TokenStream) -> proc_macro::TokenStream 
                             }
                         }
                     },
-                    std::cmp::Ordering::Greater => quote! {
+                    core::cmp::Ordering::Greater => quote! {
                         impl From<#from_ident> for #unsigned_ident {
                             fn from(x: #from_ident) -> Self {
                                 Self(<#unsigned_inner_ident>::from(x))
@@ -553,7 +553,7 @@ pub fn generate_types(item: proc_macro::TokenStream) -> proc_macro::TokenStream 
                             }
                         }
                     },
-                    std::cmp::Ordering::Less => quote! {
+                    core::cmp::Ordering::Less => quote! {
                         impl TryFrom<#from_ident> for #unsigned_ident {
                             type Error = TryFromIntError;
                             fn try_from(x: #from_ident) -> Result<Self, Self::Error> {
@@ -592,7 +592,7 @@ pub fn generate_types(item: proc_macro::TokenStream) -> proc_macro::TokenStream 
                     }
                 }
             });
-            let same = std::iter::once({
+            let same = core::iter::once({
                 quote! {
                     impl TryFrom<#signed_ident> for #unsigned_ident {
                         type Error = TryFromIntError;
@@ -635,8 +635,8 @@ pub fn generate_types(item: proc_macro::TokenStream) -> proc_macro::TokenStream 
             pointer_width_from.chain(primitive_from).chain(smaller).chain(same).chain(bigger).collect::<TokenStream>()
         };
         let signed_from_implementations = {
-            let pointer_width_from = std::iter::once(match size.cmp(&TARGET_POINTER_WIDTH) {
-                std::cmp::Ordering::Greater => quote! {
+            let pointer_width_from = core::iter::once(match size.cmp(&TARGET_POINTER_WIDTH) {
+                core::cmp::Ordering::Greater => quote! {
                     impl From<isize> for #signed_ident {
                         fn from(x: isize) -> Self {
                             Self(x as #signed_inner_ident)
@@ -649,7 +649,7 @@ pub fn generate_types(item: proc_macro::TokenStream) -> proc_macro::TokenStream 
                         }
                     }
                 },
-                std::cmp::Ordering::Equal => quote! {
+                core::cmp::Ordering::Equal => quote! {
                     impl From<isize> for #signed_ident {
                         fn from(x: isize) -> Self {
                             Self(x as #signed_inner_ident)
@@ -661,7 +661,7 @@ pub fn generate_types(item: proc_macro::TokenStream) -> proc_macro::TokenStream 
                         }
                     }
                 },
-                std::cmp::Ordering::Less => quote! {
+                core::cmp::Ordering::Less => quote! {
                     impl TryFrom<isize> for #signed_ident {
                         type Error = TryFromIntError;
                         fn try_from(x: isize) -> Result<Self,Self::Error> {
@@ -686,7 +686,7 @@ pub fn generate_types(item: proc_macro::TokenStream) -> proc_macro::TokenStream 
                 let from_ident = format_ident!("i{s}");
                 let from_ident = quote! { core::primitive::#from_ident };
                 match size.cmp(&s) {
-                    std::cmp::Ordering::Equal => quote!{
+                    core::cmp::Ordering::Equal => quote!{
                         impl From<#from_ident> for #signed_ident {
                             fn from(x: #from_ident) -> Self {
                                 Self(<#signed_inner_ident>::from(x))
@@ -698,7 +698,7 @@ pub fn generate_types(item: proc_macro::TokenStream) -> proc_macro::TokenStream 
                             }
                         }
                     },
-                    std::cmp::Ordering::Greater => quote! {
+                    core::cmp::Ordering::Greater => quote! {
                         impl From<#from_ident> for #signed_ident {
                             fn from(x: #from_ident) -> Self {
                                 Self(<#signed_inner_ident>::from(x))
@@ -711,7 +711,7 @@ pub fn generate_types(item: proc_macro::TokenStream) -> proc_macro::TokenStream 
                             }
                         }
                     },
-                    std::cmp::Ordering::Less => quote! {
+                    core::cmp::Ordering::Less => quote! {
                         impl TryFrom<#from_ident> for #signed_ident {
                             type Error = TryFromIntError;
                             fn try_from(x: #from_ident) -> Result<Self, Self::Error> {
@@ -750,7 +750,7 @@ pub fn generate_types(item: proc_macro::TokenStream) -> proc_macro::TokenStream 
                 }
             });
 
-            let same = std::iter::once({
+            let same = core::iter::once({
                 quote! {
                     impl TryFrom<#unsigned_ident> for #signed_ident {
                         type Error = TryFromIntError;
@@ -804,7 +804,7 @@ pub fn generate_types(item: proc_macro::TokenStream) -> proc_macro::TokenStream 
 
         let signed_abs = if let Some(minus @ 1..) = size.checked_sub(1) {
             let ident = format_ident!("u{minus}");
-            let inner_size = std::cmp::max(minus.next_power_of_two(),8);
+            let inner_size = core::cmp::max(minus.next_power_of_two(),8);
             let inner_ident = format_ident!("u{inner_size}");
             let inner_ident = quote! { core::primitive::#inner_ident };
             quote! {
@@ -1011,7 +1011,7 @@ pub fn generate_types(item: proc_macro::TokenStream) -> proc_macro::TokenStream 
             #unsigned_sub_ops
             #unsigned_rem_ops
 
-            impl std::ops::Div<&#unsigned_ident> for &#unsigned_ident {
+            impl core::ops::Div<&#unsigned_ident> for &#unsigned_ident {
                 type Output = #unsigned_ident;
                 fn div(self, rhs: &#unsigned_ident) -> Self::Output {
                     let x = self.0 / rhs.0;
@@ -1019,7 +1019,7 @@ pub fn generate_types(item: proc_macro::TokenStream) -> proc_macro::TokenStream 
                     #unsigned_ident(x)
                 }
             }
-            impl std::ops::Div<&#unsigned_ident> for #unsigned_ident {
+            impl core::ops::Div<&#unsigned_ident> for #unsigned_ident {
                 type Output = #unsigned_ident;
                 fn div(self, rhs: &#unsigned_ident) -> Self::Output {
                     let x = self.0 / rhs.0;
@@ -1027,7 +1027,7 @@ pub fn generate_types(item: proc_macro::TokenStream) -> proc_macro::TokenStream 
                     #unsigned_ident(x)
                 }
             }
-            impl<'a> std::ops::Div<#unsigned_ident> for &'a #unsigned_ident {
+            impl<'a> core::ops::Div<#unsigned_ident> for &'a #unsigned_ident {
                 type Output = #unsigned_ident;
                 fn div(self, rhs: #unsigned_ident) -> Self::Output {
                     let x = self.0 / rhs.0;
@@ -1035,7 +1035,7 @@ pub fn generate_types(item: proc_macro::TokenStream) -> proc_macro::TokenStream 
                     #unsigned_ident(x)
                 }
             }
-            impl std::ops::Div<#unsigned_ident> for #unsigned_ident {
+            impl core::ops::Div<#unsigned_ident> for #unsigned_ident {
                 type Output = #unsigned_ident;
                 fn div(self, rhs: #unsigned_ident) -> Self::Output {
                     let x = self.0 / rhs.0;
@@ -1044,54 +1044,54 @@ pub fn generate_types(item: proc_macro::TokenStream) -> proc_macro::TokenStream 
                 }
             }
 
-            impl std::fmt::Display for #unsigned_ident {
-                fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            impl core::fmt::Display for #unsigned_ident {
+                fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
                     write!(f,"{}",self.0)
                 }
             }
-            impl std::fmt::Binary for #unsigned_ident {
-                fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-                    std::fmt::Binary::fmt(&self.0, f)
+            impl core::fmt::Binary for #unsigned_ident {
+                fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+                    core::fmt::Binary::fmt(&self.0, f)
                 }
             }
-            impl std::fmt::LowerHex for #unsigned_ident {
-                fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-                    std::fmt::LowerHex::fmt(&self.0, f)
+            impl core::fmt::LowerHex for #unsigned_ident {
+                fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+                    core::fmt::LowerHex::fmt(&self.0, f)
                 }
             }
-            impl std::fmt::UpperHex for #unsigned_ident {
-                fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-                    std::fmt::UpperHex::fmt(&self.0, f)
+            impl core::fmt::UpperHex for #unsigned_ident {
+                fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+                    core::fmt::UpperHex::fmt(&self.0, f)
                 }
             }
-            impl std::fmt::Octal for #unsigned_ident {
-                fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-                    std::fmt::Octal::fmt(&self.0, f)
+            impl core::fmt::Octal for #unsigned_ident {
+                fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+                    core::fmt::Octal::fmt(&self.0, f)
                 }
             }
 
-            impl std::ops::BitAnd<&#unsigned_ident> for &#unsigned_ident {
-                type Output = <#unsigned_ident as std::ops::BitAnd<#unsigned_ident>>::Output;
-
-                fn bitand(self, rhs: &#unsigned_ident) -> Self::Output {
-                    #unsigned_ident(self.0 & rhs.0)
-                }
-            }
-            impl std::ops::BitAnd<&#unsigned_ident> for #unsigned_ident {
-                type Output = <#unsigned_ident as std::ops::BitAnd<#unsigned_ident>>::Output;
+            impl core::ops::BitAnd<&#unsigned_ident> for &#unsigned_ident {
+                type Output = <#unsigned_ident as core::ops::BitAnd<#unsigned_ident>>::Output;
 
                 fn bitand(self, rhs: &#unsigned_ident) -> Self::Output {
                     #unsigned_ident(self.0 & rhs.0)
                 }
             }
-            impl<'a> std::ops::BitAnd<#unsigned_ident> for &'a #unsigned_ident {
-                type Output = <#unsigned_ident as std::ops::BitAnd<#unsigned_ident>>::Output;
+            impl core::ops::BitAnd<&#unsigned_ident> for #unsigned_ident {
+                type Output = <#unsigned_ident as core::ops::BitAnd<#unsigned_ident>>::Output;
+
+                fn bitand(self, rhs: &#unsigned_ident) -> Self::Output {
+                    #unsigned_ident(self.0 & rhs.0)
+                }
+            }
+            impl<'a> core::ops::BitAnd<#unsigned_ident> for &'a #unsigned_ident {
+                type Output = <#unsigned_ident as core::ops::BitAnd<#unsigned_ident>>::Output;
 
                 fn bitand(self, rhs: #unsigned_ident) -> Self::Output {
                     #unsigned_ident(self.0 & rhs.0)
                 }
             }
-            impl std::ops::BitAnd<#unsigned_ident> for #unsigned_ident {
+            impl core::ops::BitAnd<#unsigned_ident> for #unsigned_ident {
                 type Output = Self;
 
                 fn bitand(self, rhs: Self) -> Self::Output {
@@ -1099,28 +1099,28 @@ pub fn generate_types(item: proc_macro::TokenStream) -> proc_macro::TokenStream 
                 }
             }
 
-            impl std::ops::BitOr<&#unsigned_ident> for &#unsigned_ident {
-                type Output = <#unsigned_ident as std::ops::BitOr<#unsigned_ident>>::Output;
+            impl core::ops::BitOr<&#unsigned_ident> for &#unsigned_ident {
+                type Output = <#unsigned_ident as core::ops::BitOr<#unsigned_ident>>::Output;
 
                 fn bitor(self, rhs: &#unsigned_ident) -> Self::Output {
                     #unsigned_ident(self.0 | rhs.0)
                 }
             }
-            impl std::ops::BitOr<&#unsigned_ident> for #unsigned_ident {
-                type Output = <#unsigned_ident as std::ops::BitOr<#unsigned_ident>>::Output;
+            impl core::ops::BitOr<&#unsigned_ident> for #unsigned_ident {
+                type Output = <#unsigned_ident as core::ops::BitOr<#unsigned_ident>>::Output;
 
                 fn bitor(self, rhs: &#unsigned_ident) -> Self::Output {
                     #unsigned_ident(self.0 | rhs.0)
                 }
             }
-            impl<'a> std::ops::BitOr<#unsigned_ident> for &'a #unsigned_ident {
-                type Output = <#unsigned_ident as std::ops::BitOr<#unsigned_ident>>::Output;
+            impl<'a> core::ops::BitOr<#unsigned_ident> for &'a #unsigned_ident {
+                type Output = <#unsigned_ident as core::ops::BitOr<#unsigned_ident>>::Output;
 
                 fn bitor(self, rhs: #unsigned_ident) -> Self::Output {
                     #unsigned_ident(self.0 | rhs.0)
                 }
             }
-            impl std::ops::BitOr<#unsigned_ident> for #unsigned_ident {
+            impl core::ops::BitOr<#unsigned_ident> for #unsigned_ident {
                 type Output = Self;
 
                 fn bitor(self, rhs: Self) -> Self::Output {
@@ -1128,28 +1128,28 @@ pub fn generate_types(item: proc_macro::TokenStream) -> proc_macro::TokenStream 
                 }
             }
 
-            impl std::ops::BitXor<&#unsigned_ident> for &#unsigned_ident {
-                type Output = <#unsigned_ident as std::ops::BitXor<#unsigned_ident>>::Output;
+            impl core::ops::BitXor<&#unsigned_ident> for &#unsigned_ident {
+                type Output = <#unsigned_ident as core::ops::BitXor<#unsigned_ident>>::Output;
 
                 fn bitxor(self, rhs: &#unsigned_ident) -> Self::Output {
                     #unsigned_ident(self.0 ^ rhs.0)
                 }
             }
-            impl std::ops::BitXor<&#unsigned_ident> for #unsigned_ident {
-                type Output = <#unsigned_ident as std::ops::BitXor<#unsigned_ident>>::Output;
+            impl core::ops::BitXor<&#unsigned_ident> for #unsigned_ident {
+                type Output = <#unsigned_ident as core::ops::BitXor<#unsigned_ident>>::Output;
 
                 fn bitxor(self, rhs: &#unsigned_ident) -> Self::Output {
                     #unsigned_ident(self.0 ^ rhs.0)
                 }
             }
-            impl<'a> std::ops::BitXor<#unsigned_ident> for &'a #unsigned_ident {
-                type Output = <#unsigned_ident as std::ops::BitXor<#unsigned_ident>>::Output;
+            impl<'a> core::ops::BitXor<#unsigned_ident> for &'a #unsigned_ident {
+                type Output = <#unsigned_ident as core::ops::BitXor<#unsigned_ident>>::Output;
 
                 fn bitxor(self, rhs: #unsigned_ident) -> Self::Output {
                     #unsigned_ident(self.0 ^ rhs.0)
                 }
             }
-            impl std::ops::BitXor<#unsigned_ident> for #unsigned_ident {
+            impl core::ops::BitXor<#unsigned_ident> for #unsigned_ident {
                 type Output = Self;
 
                 fn bitxor(self, rhs: Self) -> Self::Output {
@@ -1157,15 +1157,15 @@ pub fn generate_types(item: proc_macro::TokenStream) -> proc_macro::TokenStream 
                 }
             }
 
-            impl std::ops::Not for #unsigned_ident {
+            impl core::ops::Not for #unsigned_ident {
                 type Output = Self;
 
                 fn not(self) -> Self::Output {
                     #unsigned_ident(self.0)
                 }
             }
-            impl std::ops::Not for &#unsigned_ident {
-                type Output = <#unsigned_ident as std::ops::Not>::Output;
+            impl core::ops::Not for &#unsigned_ident {
+                type Output = <#unsigned_ident as core::ops::Not>::Output;
 
                 fn not(self) -> Self::Output {
                     #unsigned_ident(self.0)
@@ -1382,7 +1382,7 @@ pub fn generate_types(item: proc_macro::TokenStream) -> proc_macro::TokenStream 
             #signed_sub_ops
             #signed_rem_ops
 
-            impl std::ops::Div<&#signed_ident> for &#signed_ident {
+            impl core::ops::Div<&#signed_ident> for &#signed_ident {
                 type Output = #signed_ident;
                 fn div(self, rhs: &#signed_ident) -> Self::Output {
                     let x = self.0 / rhs.0;
@@ -1390,7 +1390,7 @@ pub fn generate_types(item: proc_macro::TokenStream) -> proc_macro::TokenStream 
                     #signed_ident(x)
                 }
             }
-            impl std::ops::Div<&#signed_ident> for #signed_ident {
+            impl core::ops::Div<&#signed_ident> for #signed_ident {
                 type Output = #signed_ident;
                 fn div(self, rhs: &#signed_ident) -> Self::Output {
                     let x = self.0 / rhs.0;
@@ -1398,7 +1398,7 @@ pub fn generate_types(item: proc_macro::TokenStream) -> proc_macro::TokenStream 
                     #signed_ident(x)
                 }
             }
-            impl<'a> std::ops::Div<#signed_ident> for &'a #signed_ident {
+            impl<'a> core::ops::Div<#signed_ident> for &'a #signed_ident {
                 type Output = #signed_ident;
                 fn div(self, rhs: #signed_ident) -> Self::Output {
                     let x = self.0 / rhs.0;
@@ -1406,7 +1406,7 @@ pub fn generate_types(item: proc_macro::TokenStream) -> proc_macro::TokenStream 
                     #signed_ident(x)
                 }
             }
-            impl std::ops::Div<#signed_ident> for #signed_ident {
+            impl core::ops::Div<#signed_ident> for #signed_ident {
                 type Output = #signed_ident;
                 fn div(self, rhs: #signed_ident) -> Self::Output {
                     let x = self.0 / rhs.0;
@@ -1415,54 +1415,54 @@ pub fn generate_types(item: proc_macro::TokenStream) -> proc_macro::TokenStream 
                 }
             }
 
-            impl std::fmt::Display for #signed_ident {
-                fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            impl core::fmt::Display for #signed_ident {
+                fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
                     write!(f,"{}",self.0)
                 }
             }
-            impl std::fmt::Binary for #signed_ident {
-                fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-                    std::fmt::Binary::fmt(&self.0, f)
+            impl core::fmt::Binary for #signed_ident {
+                fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+                    core::fmt::Binary::fmt(&self.0, f)
                 }
             }
-            impl std::fmt::LowerHex for #signed_ident {
-                fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-                    std::fmt::LowerHex::fmt(&self.0, f)
+            impl core::fmt::LowerHex for #signed_ident {
+                fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+                    core::fmt::LowerHex::fmt(&self.0, f)
                 }
             }
-            impl std::fmt::UpperHex for #signed_ident {
-                fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-                    std::fmt::UpperHex::fmt(&self.0, f)
+            impl core::fmt::UpperHex for #signed_ident {
+                fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+                    core::fmt::UpperHex::fmt(&self.0, f)
                 }
             }
-            impl std::fmt::Octal for #signed_ident {
-                fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-                    std::fmt::Octal::fmt(&self.0, f)
+            impl core::fmt::Octal for #signed_ident {
+                fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+                    core::fmt::Octal::fmt(&self.0, f)
                 }
             }
 
-            impl std::ops::BitAnd<&#signed_ident> for &#signed_ident {
-                type Output = <#signed_ident as std::ops::BitAnd<#signed_ident>>::Output;
-
-                fn bitand(self, rhs: &#signed_ident) -> Self::Output {
-                    #signed_ident(self.0 & rhs.0)
-                }
-            }
-            impl std::ops::BitAnd<&#signed_ident> for #signed_ident {
-                type Output = <#signed_ident as std::ops::BitAnd<#signed_ident>>::Output;
+            impl core::ops::BitAnd<&#signed_ident> for &#signed_ident {
+                type Output = <#signed_ident as core::ops::BitAnd<#signed_ident>>::Output;
 
                 fn bitand(self, rhs: &#signed_ident) -> Self::Output {
                     #signed_ident(self.0 & rhs.0)
                 }
             }
-            impl<'a> std::ops::BitAnd<#signed_ident> for &'a #signed_ident {
-                type Output = <#signed_ident as std::ops::BitAnd<#signed_ident>>::Output;
+            impl core::ops::BitAnd<&#signed_ident> for #signed_ident {
+                type Output = <#signed_ident as core::ops::BitAnd<#signed_ident>>::Output;
+
+                fn bitand(self, rhs: &#signed_ident) -> Self::Output {
+                    #signed_ident(self.0 & rhs.0)
+                }
+            }
+            impl<'a> core::ops::BitAnd<#signed_ident> for &'a #signed_ident {
+                type Output = <#signed_ident as core::ops::BitAnd<#signed_ident>>::Output;
 
                 fn bitand(self, rhs: #signed_ident) -> Self::Output {
                     #signed_ident(self.0 & rhs.0)
                 }
             }
-            impl std::ops::BitAnd<#signed_ident> for #signed_ident {
+            impl core::ops::BitAnd<#signed_ident> for #signed_ident {
                 type Output = Self;
 
                 fn bitand(self, rhs: Self) -> Self::Output {
@@ -1470,28 +1470,28 @@ pub fn generate_types(item: proc_macro::TokenStream) -> proc_macro::TokenStream 
                 }
             }
 
-            impl std::ops::BitOr<&#signed_ident> for &#signed_ident {
-                type Output = <#signed_ident as std::ops::BitOr<#signed_ident>>::Output;
+            impl core::ops::BitOr<&#signed_ident> for &#signed_ident {
+                type Output = <#signed_ident as core::ops::BitOr<#signed_ident>>::Output;
 
                 fn bitor(self, rhs: &#signed_ident) -> Self::Output {
                     #signed_ident(self.0 | rhs.0)
                 }
             }
-            impl std::ops::BitOr<&#signed_ident> for #signed_ident {
-                type Output = <#signed_ident as std::ops::BitOr<#signed_ident>>::Output;
+            impl core::ops::BitOr<&#signed_ident> for #signed_ident {
+                type Output = <#signed_ident as core::ops::BitOr<#signed_ident>>::Output;
 
                 fn bitor(self, rhs: &#signed_ident) -> Self::Output {
                     #signed_ident(self.0 | rhs.0)
                 }
             }
-            impl<'a> std::ops::BitOr<#signed_ident> for &'a #signed_ident {
-                type Output = <#signed_ident as std::ops::BitOr<#signed_ident>>::Output;
+            impl<'a> core::ops::BitOr<#signed_ident> for &'a #signed_ident {
+                type Output = <#signed_ident as core::ops::BitOr<#signed_ident>>::Output;
 
                 fn bitor(self, rhs: #signed_ident) -> Self::Output {
                     #signed_ident(self.0 | rhs.0)
                 }
             }
-            impl std::ops::BitOr<#signed_ident> for #signed_ident {
+            impl core::ops::BitOr<#signed_ident> for #signed_ident {
                 type Output = Self;
 
                 fn bitor(self, rhs: Self) -> Self::Output {
@@ -1499,28 +1499,28 @@ pub fn generate_types(item: proc_macro::TokenStream) -> proc_macro::TokenStream 
                 }
             }
 
-            impl std::ops::BitXor<&#signed_ident> for &#signed_ident {
-                type Output = <#signed_ident as std::ops::BitXor<#signed_ident>>::Output;
+            impl core::ops::BitXor<&#signed_ident> for &#signed_ident {
+                type Output = <#signed_ident as core::ops::BitXor<#signed_ident>>::Output;
 
                 fn bitxor(self, rhs: &#signed_ident) -> Self::Output {
                     #signed_ident(self.0 ^ rhs.0)
                 }
             }
-            impl std::ops::BitXor<&#signed_ident> for #signed_ident {
-                type Output = <#signed_ident as std::ops::BitXor<#signed_ident>>::Output;
+            impl core::ops::BitXor<&#signed_ident> for #signed_ident {
+                type Output = <#signed_ident as core::ops::BitXor<#signed_ident>>::Output;
 
                 fn bitxor(self, rhs: &#signed_ident) -> Self::Output {
                     #signed_ident(self.0 ^ rhs.0)
                 }
             }
-            impl<'a> std::ops::BitXor<#signed_ident> for &'a #signed_ident {
-                type Output = <#signed_ident as std::ops::BitXor<#signed_ident>>::Output;
+            impl<'a> core::ops::BitXor<#signed_ident> for &'a #signed_ident {
+                type Output = <#signed_ident as core::ops::BitXor<#signed_ident>>::Output;
 
                 fn bitxor(self, rhs: #signed_ident) -> Self::Output {
                     #signed_ident(self.0 ^ rhs.0)
                 }
             }
-            impl std::ops::BitXor<#signed_ident> for #signed_ident {
+            impl core::ops::BitXor<#signed_ident> for #signed_ident {
                 type Output = Self;
 
                 fn bitxor(self, rhs: Self) -> Self::Output {
@@ -1528,7 +1528,7 @@ pub fn generate_types(item: proc_macro::TokenStream) -> proc_macro::TokenStream 
                 }
             }
 
-            impl std::ops::Neg for #signed_ident {
+            impl core::ops::Neg for #signed_ident {
                 type Output = Self;
                 fn neg(self) -> Self::Output {
                     assert_ne!(self,Self::MIN);
@@ -1536,15 +1536,15 @@ pub fn generate_types(item: proc_macro::TokenStream) -> proc_macro::TokenStream 
                 }
             }
 
-            impl std::ops::Not for #signed_ident {
+            impl core::ops::Not for #signed_ident {
                 type Output = Self;
 
                 fn not(self) -> Self::Output {
                     #signed_ident(self.0)
                 }
             }
-            impl std::ops::Not for &#signed_ident {
-                type Output = <#signed_ident as std::ops::Not>::Output;
+            impl core::ops::Not for &#signed_ident {
+                type Output = <#signed_ident as core::ops::Not>::Output;
 
                 fn not(self) -> Self::Output {
                     #signed_ident(self.0)

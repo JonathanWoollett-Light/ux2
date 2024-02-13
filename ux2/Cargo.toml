@@ -11,12 +11,13 @@ readme = "../README.md"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [features]
-default = ["8"]
+default = ["8", "std"]
 128 = ["64"]
 64 = ["32"]
 32 = ["16"]
 16 = ["8"]
 8 = []
+std = []
 
 [dependencies]
 serde = { version = "1.0.160", features = ["derive"], optional = true }
