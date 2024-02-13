@@ -78,6 +78,8 @@ macro_rules! extra_impls {
     ($ty:ty) => {
         #[cfg(feature = "emath_0_25")]
         emath_number_impl!($ty, emath_0_25);
+        #[cfg(feature = "emath_0_26")]
+        emath_number_impl!($ty, emath_0_26);
     };
 }
 use extra_impls;
