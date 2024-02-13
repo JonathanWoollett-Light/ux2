@@ -303,6 +303,11 @@ assert_eq!({unsigned_ident}::new_mask({unsigned_inner_ident}::default()), {unsig
         let signed_min_doc = format!(" assert_eq!({signed_ident}::MIN, {signed_ident}::try_from({signed_min_ident}).unwrap());");
         let signed_bits_doc = format!(" assert_eq!({signed_ident}::BITS, {size});");
         let signed_wrapping_add_examples = format!(" assert_eq!({signed_ident}::MIN.wrapping_add({signed_ident}::try_from({signed_minus_one}).unwrap()), {signed_ident}::MAX);");
+        let signed_into_inner_doc = format!("assert_eq!({signed_ident}::default().into_inner(), {signed_inner_ident}::default());");
+        let signed_new_mask = format!("assert_eq!({signed_ident}::new_mask({signed_inner_ident}::MAX), {signed_ident}::MAX);
+assert_eq!({signed_ident}::new_mask({signed_inner_ident}::MIN), {signed_ident}::MIN);
+assert_eq!({signed_ident}::new_mask({signed_inner_ident}::default()), {signed_ident}::default());
+");
 
         let signed_add_ops = (1..max).filter(|rhs| std::cmp::max(rhs,&size) < &max).map(|s| {
             let signed_rhs = format_ident!("i{s}");
@@ -828,22 +833,7 @@ assert_eq!({unsigned_ident}::new_mask({unsigned_inner_ident}::default()), {unsig
             #[repr(transparent)]
             #[derive(Debug, Eq, PartialEq, Ord, PartialOrd, Clone, Copy, Hash)]
             pub struct #unsigned_ident(#unsigned_inner_ident);
-            #[cfg(feature = "emath_0_25")]
-            impl emath_0_25::Numeric for #unsigned_ident {
-                const INTEGRAL: bool = false;
-                const MIN: Self = #unsigned_ident::MIN;
-                const MAX: Self = #unsigned_ident::MAX;
-
-                #[inline(always)]
-                fn to_f64(self) -> f64 {
-                    self.0 as f64
-                }
-
-                #[inline(always)]
-                fn from_f64(num: f64) -> Self {
-                    Self::new(num as #unsigned_inner_ident)
-                }
-            }
+            crate::extra_impls!( #unsigned_ident );
             impl core::default::Default for #unsigned_ident {
                 fn default() -> Self {
                     #unsigned_ident::new(#unsigned_inner_ident::default())
@@ -1235,6 +1225,12 @@ assert_eq!({unsigned_ident}::new_mask({unsigned_inner_ident}::default()), {unsig
             #[repr(transparent)]
             #[derive(Debug, Eq, PartialEq, Ord, PartialOrd, Clone, Copy, Hash)]
             pub struct #signed_ident(#signed_inner_ident);
+            crate::extra_impls!( #signed_ident );
+            impl core::default::Default for #signed_ident {
+                fn default() -> Self {
+                    #signed_ident::new(#signed_inner_ident::default())
+                }
+            }
             impl #signed_ident {
                 fn mask(self) -> Self {
                     let x = if self.0 & (#signed_one << (#size - 1)) == 0 {
@@ -1284,6 +1280,38 @@ assert_eq!({unsigned_ident}::new_mask({unsigned_inner_ident}::default()), {unsig
                 pub const fn new(x: #signed_inner_ident) -> Self {
                     assert!(x >= Self::MIN.0 && x <= Self::MAX.0);
                     Self(x)
+                }
+
+                /// Equivalent of an `as` cast.
+                /// Truncates the value, if the argument is too big
+                ///
+                /// # Examples
+                ///
+                /// ```
+                /// # use ux2::*;
+                #[doc=#signed_new_mask]
+                /// ```
+                pub const fn new_mask(x: #signed_inner_ident) -> Self {
+                    if x >= Self::MIN.0 && x <= Self::MAX.0 {
+                        Self(x)
+                    }else if x < Self::MIN.0 {
+                        Self::MIN
+                    }else{
+                        Self::MAX
+                    }
+                }
+
+                /// Gets the inner value
+                ///
+                ///
+                /// # Examples
+                ///
+                /// ```
+                /// # use ux2::*;
+                #[doc=#signed_into_inner_doc]
+                /// ```
+                pub const fn into_inner(self) -> #signed_inner_ident {
+                    self.0
                 }
 
                 #signed_abs
