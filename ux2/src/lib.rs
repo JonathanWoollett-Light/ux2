@@ -73,6 +73,41 @@ ux2_macros::generate_types!(16);
 #[cfg(all(feature = "8", not(feature = "16")))]
 ux2_macros::generate_types!(8);
 
+macro_rules! extra_impls {
+    ($ty:ty) => {
+        #[cfg(feature = "emath_0_25")]
+        $crate::emath_number_impl!($ty, emath_0_25);
+        #[cfg(feature = "emath_0_26")]
+        $crate::emath_number_impl!($ty, emath_0_26);
+        #[cfg(feature = "emath_0_27")]
+        $crate::emath_number_impl!($ty, emath_0_27);
+    };
+}
+use extra_impls;
+#[cfg_attr(
+    all(not(feature = "emath_0_26"), not(feature = "emath_0_25")),
+    allow(unused_macros)
+)]
+macro_rules! emath_number_impl {
+    ($ty:ty, $ident:ident) => {
+        impl $ident::Numeric for $ty {
+            const INTEGRAL: bool = true;
+            const MAX: Self = <$ty>::MAX;
+            const MIN: Self = <$ty>::MIN;
+
+            #[inline(always)]
+            fn to_f64(self) -> f64 {
+                self.0 as f64
+            }
+
+            #[inline(always)]
+            fn from_f64(num: f64) -> Self {
+                Self::new_mask(num as _)
+            }
+        }
+    };
+}
+
 /// A mimic of [`std::num::TryFromIntError`] that can be constructed on stable.
 #[derive(Debug, Eq, PartialEq)]
 pub struct TryFromIntError;
