@@ -9,7 +9,7 @@ license = "Apache-2.0"
 
 [dependencies]
 quote = "1.0.35"
-proc-macro2 = "1.0.84"
+proc-macro2 = "1.0.85"
 
 [lib]
 proc-macro = true
