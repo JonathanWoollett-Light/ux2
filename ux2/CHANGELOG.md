@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.9.0](https://github.com/JonathanWoollett-Light/ux2/compare/ux2-v0.8.3...ux2-v0.9.0) (2024-08-24)
+
+
+### Features
+
+* Add no_std support ([b3eb624](https://github.com/JonathanWoollett-Light/ux2/commit/b3eb624716431f9a5987951c9c817837a2c94960))
+
 ## [0.8.3](https://github.com/JonathanWoollett-Light/ux2/compare/ux2-v0.8.2...ux2-v0.8.3) (2023-08-30)
 
 
