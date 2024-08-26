@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.10.0](https://github.com/JonathanWoollett-Light/ux2/compare/ux2-macros-v0.9.0...ux2-macros-v0.10.0) (2024-08-24)
+
+
+### Features
+
+* Add Default impl ([e3dc097](https://github.com/JonathanWoollett-Light/ux2/commit/e3dc097b418c8028be346ae58be3b8a9be5fb37c))
+* Add no_std support ([b3eb624](https://github.com/JonathanWoollett-Light/ux2/commit/b3eb624716431f9a5987951c9c817837a2c94960))
+
 ## [0.9.0](https://github.com/JonathanWoollett-Light/ux2/compare/ux2-macros-v0.8.0...ux2-macros-v0.9.0) (2023-08-30)
 
 
